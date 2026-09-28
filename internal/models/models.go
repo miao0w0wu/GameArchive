@@ -1,8 +1,4 @@
-// Package models 定义「游戏档案」的 SQLite 数据模型（GORM）。
-//
-// 阶段 1 只使用 Game / Category / Tag 三张表；
-// 其余表（play_sessions / settings / reports / save_archives / save_backups）
-// 一并建表，供阶段 2-5 直接写入，避免后续再做破坏性迁移。
+// Package models 定义「游戏档案」的 SQLite 数据模型（GORM）与 Wails DTO。
 package models
 
 import "time"
@@ -26,6 +22,17 @@ type Game struct {
 	LastPlayedAt *time.Time `json:"lastPlayedAt"`
 	CreatedAt    time.Time  `json:"createdAt"`
 	UpdatedAt    time.Time  `json:"updatedAt"`
+}
+
+// ScannedGame 是目录扫描的预览结果，不会直接映射到数据库。
+type ScannedGame struct {
+	Name              string `json:"name"`
+	ExePath           string `json:"exePath"`
+	ProcessName       string `json:"processName"`
+	InstallDir        string `json:"installDir"`
+	SizeBytes         int64  `json:"sizeBytes"`
+	SuggestedCategory string `json:"suggestedCategory"`
+	CategoryID        *uint  `json:"categoryId"`
 }
 
 // Category 游戏分类。

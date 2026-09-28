@@ -69,6 +69,24 @@ export function formatHours(totalSeconds: number): string {
     return `${hours.toFixed(1)} h`
 }
 
+/** 把字节数格式化为文件大小。 */
+export function formatBytes(bytes: number): string {
+    if (!Number.isFinite(bytes) || bytes < 0) {
+        return '未知大小'
+    }
+    if (bytes < 1024) {
+        return `${bytes} B`
+    }
+    const units = ['KB', 'MB', 'GB', 'TB']
+    let size = bytes / 1024
+    let unit = 0
+    while (size >= 1024 && unit < units.length - 1) {
+        size /= 1024
+        unit += 1
+    }
+    return `${size.toFixed(1)} ${units[unit]}`
+}
+
 /** 取名称首字符作为封面占位。 */
 export function initialOf(name: string): string {
     const trimmed = (name || '').trim()

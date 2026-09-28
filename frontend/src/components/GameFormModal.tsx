@@ -111,7 +111,7 @@ export default function GameFormModal({ game, onClose }: GameFormModalProps) {
                         placeholder="D:\Games\Stardew Valley\Stardew Valley.exe"
                     />
                     <p className="mt-1 text-xs text-slate-500">
-                        阶段 2 的进程监控会优先用该绝对路径匹配游戏进程。
+                        进程监控会优先按该路径匹配游戏进程，其次使用进程名。
                     </p>
                 </div>
 

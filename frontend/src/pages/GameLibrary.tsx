@@ -4,6 +4,7 @@ import type { models } from '../../wailsjs/go/models'
 import ConfirmDialog from '../components/ConfirmDialog'
 import GameDetailModal from '../components/GameDetailModal'
 import GameFormModal from '../components/GameFormModal'
+import ScanGamesModal from '../components/ScanGamesModal'
 import { IconEdit, IconGrid, IconList, IconPlus, IconSearch, IconTrash } from '../components/Icons'
 import { formatDate, formatDuration, initialOf } from '../lib/format'
 import { btnGhost, btnIcon, btnPrimary, cardClass, inputClass } from '../lib/ui'
@@ -23,6 +24,7 @@ export default function GameLibrary() {
     const [tagFilter, setTagFilter] = useState<number[]>([])
     const [view, setView] = useState<ViewMode>('list')
     const [formOpen, setFormOpen] = useState(false)
+    const [scannerOpen, setScannerOpen] = useState(false)
     const [editingGame, setEditingGame] = useState<models.Game | null>(null)
     const [detailId, setDetailId] = useState<number | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<models.Game | null>(null)
@@ -87,10 +89,15 @@ export default function GameLibrary() {
                         {hasFilter ? `，筛选出 ${filtered.length} 个` : ''}
                     </p>
                 </div>
-                <button type="button" className={btnPrimary} onClick={openCreate}>
-                    <IconPlus width={16} height={16} />
-                    添加游戏
-                </button>
+                <div className="flex flex-wrap gap-2">
+                    <button type="button" className={btnGhost} onClick={() => setScannerOpen(true)}>
+                        扫描目录
+                    </button>
+                    <button type="button" className={btnPrimary} onClick={openCreate}>
+                        <IconPlus width={16} height={16} />
+                        添加游戏
+                    </button>
+                </div>
             </header>
 
             <div className={`${cardClass} mb-4 p-4`}>
@@ -372,6 +379,8 @@ export default function GameLibrary() {
                     onClose={() => setFormOpen(false)}
                 />
             ) : null}
+
+            {scannerOpen ? <ScanGamesModal onClose={() => setScannerOpen(false)} /> : null}
 
             {detailId !== null ? (
                 <GameDetailModal gameId={detailId} onClose={() => setDetailId(null)} />

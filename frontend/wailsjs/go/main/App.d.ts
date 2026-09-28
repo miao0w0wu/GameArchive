@@ -8,6 +8,8 @@ export function AddCategory(arg1:models.Category):Promise<models.Category>;
 
 export function AddGame(arg1:models.Game):Promise<models.Game>;
 
+export function AddGameDirectory(arg1:string):Promise<void>;
+
 export function AddTag(arg1:models.Tag):Promise<models.Tag>;
 
 export function DeleteCategory(arg1:number):Promise<void>;
@@ -18,13 +20,31 @@ export function DeleteTag(arg1:number):Promise<void>;
 
 export function GetAppInfo():Promise<main.AppInfo>;
 
+export function GetDashboardStats():Promise<services.StatsOverview>;
+
 export function GetGameDetail(arg1:number):Promise<services.GameDetail>;
+
+export function GetGameDirectory():Promise<string>;
+
+export function GetMonitorStatus():Promise<services.MonitorStatus>;
+
+export function GetStatsByPeriod(arg1:string,arg2:string,arg3:string):Promise<services.StatsResult>;
+
+export function ImportScannedGames(arg1:Array<models.ScannedGame>):Promise<services.ImportResult>;
 
 export function ListCategories():Promise<Array<models.Category>>;
 
 export function ListGames():Promise<Array<models.Game>>;
 
 export function ListTags():Promise<Array<models.Tag>>;
+
+export function ScanGamesInDirectory(arg1:string,arg2:number):Promise<Array<models.ScannedGame>>;
+
+export function SelectGameDirectory():Promise<string>;
+
+export function StartMonitor():Promise<void>;
+
+export function StopMonitor():Promise<void>;
 
 export function UpdateCategory(arg1:models.Category):Promise<models.Category>;
 

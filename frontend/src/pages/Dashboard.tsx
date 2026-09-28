@@ -7,18 +7,18 @@ import { cardClass } from '../lib/ui'
 import { useAppStore } from '../stores/appStore'
 
 const ROADMAP = [
-    '阶段 2：目录扫描 + 进程监控 + 时长统计',
-    '阶段 3：统计图表 + 按年 / 月 / 周分析',
     '阶段 4：AI 报告 + 图片导出 + 报告导入导出',
     '阶段 5：本地存档导入 / 备份 / 备份历史',
 ]
 
-/** 仪表盘：总览数据与分类分布（时长相关统计在阶段 2 之后才会有数据）。 */
+/** 仪表盘：总览游戏数据、累计时长与当前运行状态。 */
 export default function Dashboard() {
     const games = useAppStore((state) => state.games)
     const categories = useAppStore((state) => state.categories)
     const tags = useAppStore((state) => state.tags)
     const navigate = useAppStore((state) => state.navigate)
+    const monitorStatus = useAppStore((state) => state.monitorStatus)
+    const dashboardStats = useAppStore((state) => state.dashboardStats)
 
     const totalSeconds = useMemo(
         () => games.reduce((sum, game) => sum + (game.totalSeconds || 0), 0),
@@ -67,9 +67,20 @@ export default function Dashboard() {
             <header className="mb-6">
                 <h1 className="text-xl font-semibold text-slate-100">仪表盘</h1>
                 <p className="mt-1 text-sm text-slate-500">
-                    当前为阶段 1，仅包含本地数据的管理功能；游玩时长会在阶段 2 接入进程监控后开始累积。
+                    进程监控会自动累计游玩时长；目录扫描与监控开关可在游戏库和设置中使用。
                 </p>
             </header>
+
+            {monitorStatus?.activeGames.length ? (
+                <div className="mb-5 flex flex-wrap items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 text-xs">
+                    <span className="font-medium text-emerald-300">正在游玩</span>
+                    {monitorStatus.activeGames.map((game) => (
+                        <span key={game.gameId} className="rounded-full bg-slate-800 px-3 py-1 text-slate-200">
+                            {game.name} · {formatDuration(game.durationSeconds)}
+                        </span>
+                    ))}
+                </div>
+            ) : null}
 
             <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard
@@ -98,6 +109,27 @@ export default function Dashboard() {
                     accent="#0ea5e9"
                 />
             </section>
+
+                            <section className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                <StatCard
+                                    label="今日时长"
+                                    value={formatHours(dashboardStats?.todaySeconds ?? 0)}
+                                    hint={formatDuration(dashboardStats?.todaySeconds ?? 0)}
+                                    accent="#22c55e"
+                                />
+                                <StatCard
+                                    label="本周时长"
+                                    value={formatHours(dashboardStats?.weekSeconds ?? 0)}
+                                    hint={formatDuration(dashboardStats?.weekSeconds ?? 0)}
+                                    accent="#6366f1"
+                                />
+                                <StatCard
+                                    label="本月时长"
+                                    value={formatHours(dashboardStats?.monthSeconds ?? 0)}
+                                    hint={formatDuration(dashboardStats?.monthSeconds ?? 0)}
+                                    accent="#f97316"
+                                />
+                            </section>
 
             <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <div className={`${cardClass} p-5`}>
@@ -141,8 +173,16 @@ export default function Dashboard() {
                 <div className={`${cardClass} p-5`}>
                     <h2 className="text-sm font-semibold text-slate-200">游戏数量分布</h2>
                     <p className="mt-1 text-xs text-slate-500">
-                        按分类统计的游戏数量（时长占比统计将在阶段 3 提供）。
-                    </p>
+                                            按分类统计的游戏数量；时长与占比分析见
+                                            <button
+                                                type="button"
+                                                className="ml-1 text-indigo-300 underline-offset-4 hover:underline"
+                                                onClick={() => navigate('stats')}
+                                            >
+                                                统计报告
+                                            </button>
+                                            页。
+                                        </p>
                     {categories.length === 0 ? (
                         <div className="py-8 text-center text-sm text-slate-500">暂无分类</div>
                     ) : (

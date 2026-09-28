@@ -115,3 +115,9 @@ export const IconRoute = (props: IconProps) => (
         <path d="M4 6h16M4 12h10M4 18h6" />
     </Base>
 )
+
+export const IconChart = (props: IconProps) => (
+    <Base {...props}>
+        <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+    </Base>
+)

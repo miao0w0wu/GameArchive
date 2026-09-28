@@ -16,6 +16,9 @@ type Services struct {
 	Game     *GameService
 	Category *CategoryService
 	Tag      *TagService
+	Scanner  *ScannerService
+	Tracker  *Tracker
+	Stats    *StatsService
 }
 
 // New 创建业务服务集合。
@@ -24,5 +27,8 @@ func New(db *gorm.DB) *Services {
 		Game:     &GameService{db: db},
 		Category: &CategoryService{db: db},
 		Tag:      &TagService{db: db},
+		Scanner:  &ScannerService{},
+		Tracker:  NewTracker(db, nil, nil),
+		Stats:    &StatsService{db: db},
 	}
 }

@@ -13,17 +13,21 @@ import {
     DeleteGame,
     DeleteTag,
     GetAppInfo,
+        GetDashboardStats,
+        GetMonitorStatus,
     ListCategories,
     ListGames,
     ListTags,
     UpdateCategory,
     UpdateGame,
     UpdateTag,
+    StartMonitor,
+    StopMonitor,
 } from '../../wailsjs/go/main/App'
-import { main, models } from '../../wailsjs/go/models'
+import { main, models, services } from '../../wailsjs/go/models'
 
 /** 应用内页面标识。 */
-export type Route = 'dashboard' | 'library' | 'categories' | 'settings'
+export type Route = 'dashboard' | 'library' | 'stats' | 'categories' | 'settings'
 
 export type ToastKind = 'success' | 'error' | 'info'
 
@@ -78,7 +82,10 @@ interface AppState {
     categories: models.Category[]
     tags: models.Tag[]
     appInfo: main.AppInfo | null
-    toasts: Toast[]
+    monitorStatus: services.MonitorStatus | null
+        /** 仪表盘汇总统计（总时长、今日 / 本周 / 本月、Top 游戏、分类占比）。 */
+        dashboardStats: services.StatsOverview | null
+        toasts: Toast[]
 
     navigate: (route: Route) => void
     notify: (kind: ToastKind, message: string) => void
@@ -86,6 +93,9 @@ interface AppState {
 
     bootstrap: () => Promise<void>
     refreshAll: () => Promise<void>
+    refreshTrackedGames: () => Promise<void>
+        refreshDashboardStats: () => Promise<void>
+        setMonitorEnabled: (enabled: boolean) => Promise<void>
 
     saveGame: (input: GameInput, id?: number) => Promise<boolean>
     removeGame: (id: number) => Promise<void>
@@ -105,6 +115,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     categories: [],
     tags: [],
     appInfo: null,
+    monitorStatus: null,
+        dashboardStats: null,
     toasts: [],
 
     navigate: (route) => set({ route }),
@@ -128,17 +140,53 @@ export const useAppStore = create<AppState>((set, get) => ({
     refreshAll: async () => {
         set({ refreshing: true })
         try {
-            const [games, categories, tags, appInfo] = await Promise.all([
+            const [games, categories, tags, appInfo, monitorStatus, dashboardStats] = await Promise.all([
                 ListGames(),
                 ListCategories(),
                 ListTags(),
                 GetAppInfo(),
-            ])
-            set({ games, categories, tags, appInfo })
+                GetMonitorStatus(),
+                            GetDashboardStats(),
+                        ])
+                        set({ games, categories, tags, appInfo, monitorStatus, dashboardStats })
         } catch (error) {
             get().notify('error', `加载数据失败：${extractError(error)}`)
         } finally {
             set({ refreshing: false })
+        }
+    },
+
+    refreshTrackedGames: async () => {
+        try {
+            const games = await ListGames()
+            set({ games })
+        } catch (error) {
+            get().notify('error', `刷新游玩时长失败：${extractError(error)}`)
+        }
+    },
+
+        refreshDashboardStats: async () => {
+            try {
+                const dashboardStats = await GetDashboardStats()
+                set({ dashboardStats })
+            } catch (error) {
+                get().notify('error', `刷新统计数据失败：${extractError(error)}`)
+            }
+        },
+
+    setMonitorEnabled: async (enabled) => {
+        try {
+            if (enabled) {
+                await StartMonitor()
+                get().notify('success', '进程监控已开启')
+            } else {
+                await StopMonitor()
+                get().notify('success', '进程监控已暂停，当前会话已收尾')
+            }
+            await get().refreshAll()
+        } catch (error) {
+            get().notify('error', `更新监控状态失败：${extractError(error)}`)
+            await get().refreshAll()
         }
     },
 

@@ -10,6 +10,10 @@ export function AddGame(arg1) {
   return window['go']['main']['App']['AddGame'](arg1);
 }
 
+export function AddGameDirectory(arg1) {
+  return window['go']['main']['App']['AddGameDirectory'](arg1);
+}
+
 export function AddTag(arg1) {
   return window['go']['main']['App']['AddTag'](arg1);
 }
@@ -30,8 +34,28 @@ export function GetAppInfo() {
   return window['go']['main']['App']['GetAppInfo']();
 }
 
+export function GetDashboardStats() {
+  return window['go']['main']['App']['GetDashboardStats']();
+}
+
 export function GetGameDetail(arg1) {
   return window['go']['main']['App']['GetGameDetail'](arg1);
+}
+
+export function GetGameDirectory() {
+  return window['go']['main']['App']['GetGameDirectory']();
+}
+
+export function GetMonitorStatus() {
+  return window['go']['main']['App']['GetMonitorStatus']();
+}
+
+export function GetStatsByPeriod(arg1, arg2, arg3) {
+  return window['go']['main']['App']['GetStatsByPeriod'](arg1, arg2, arg3);
+}
+
+export function ImportScannedGames(arg1) {
+  return window['go']['main']['App']['ImportScannedGames'](arg1);
 }
 
 export function ListCategories() {
@@ -44,6 +68,22 @@ export function ListGames() {
 
 export function ListTags() {
   return window['go']['main']['App']['ListTags']();
+}
+
+export function ScanGamesInDirectory(arg1, arg2) {
+  return window['go']['main']['App']['ScanGamesInDirectory'](arg1, arg2);
+}
+
+export function SelectGameDirectory() {
+  return window['go']['main']['App']['SelectGameDirectory']();
+}
+
+export function StartMonitor() {
+  return window['go']['main']['App']['StartMonitor']();
+}
+
+export function StopMonitor() {
+  return window['go']['main']['App']['StopMonitor']();
 }
 
 export function UpdateCategory(arg1) {
