@@ -2,7 +2,7 @@
 
 统计每一个游戏的游戏时长、进行游玩数据分析，并支持本地游戏存档导入与备份的桌面应用。
 
-当前进度：**阶段 1、阶段 2、阶段 3 已完成**。阶段 3 增加 ECharts 统计图表与按年 / 月 / 周分析；阶段 4-5 尚未实现。
+当前进度：**阶段 1-4 已完成**。阶段 4 提供 OpenAI 兼容 API（默认 DeepSeek）生成 Markdown 报告、图片导出与外部报告导入导出；阶段 5 尚未实现。
 
 ## 技术栈
 
@@ -15,6 +15,8 @@
 | 数据库 | SQLite（纯 Go 驱动 `glebarez/sqlite` + GORM，无需 CGO） |
 | 进程监控 | `gopsutil/v3/process`，每 5 秒轮询 |
 | 图表 | ECharts 6（按需注册折线 / 柱状 / 饼图，Canvas 渲染） |
+| AI 报告 | OpenAI 兼容 Chat Completions API（默认 DeepSeek） |
+| Markdown / 图片 | marked + DOMPurify、html2canvas-pro |
 | 界面语言 / 主题 | 中文 / 暗色 |
 
 ## 已实现功能
@@ -45,9 +47,17 @@
 - 统计口径：数据来自 `play_sessions`；跨天会话归属开始日期，与 `games.total_seconds` 一致；应用运行中会自动刷新图表。
 - 后端接口支持自定义范围（同时传 `start` / `end`），跨度不超过 62 天按天分桶，否则按月分桶。
 
+### 阶段 4：AI 报告 + 图片导出 + 报告导入导出
+
+- 支持 OpenAI 兼容 Chat Completions API；默认地址 `https://api.deepseek.com`、模型 `deepseek-chat`，也可在设置页更换服务地址与模型。
+- API Key 由用户在设置页配置并保存在本机 SQLite `settings` 表；测试连接并生成报告时才会向所配置的服务发送请求及所选周期统计数据。
+- 按年 / 月 / 周统计结果生成 Markdown 报告，并保存到本地报告库；支持查看、删除与导出 Markdown 文件。
+- 支持导入 `.md`、`.markdown`、`.txt` 和包含标题、周期、正文的 `.json` 报告。
+- 统计分析页可导出当前周期图表与汇总卡片为 PNG；报告详情可单独导出 Markdown 或 PNG。
+- Markdown 正文经 DOMPurify 净化后显示；图片写入前会检查 PNG 格式、文件大小和尺寸。
+
 未实现（后续阶段）：
 
-- 阶段 4：Ollama / OpenAI 兼容接口生成 AI 报告、图片导出、报告导入导出。
 - 阶段 5：本地存档导入、备份与备份历史管理。
 
 ## 目录结构
@@ -70,7 +80,8 @@
 │     ├─ scanner_service.go    # 扫描结果批量导入
 │     ├─ tracker.go            # 进程轮询、会话与时长累计
 │     ├─ stats.go              # 年 / 月 / 周统计聚合与仪表盘汇总
-│     └─ *_test.go             # 扫描、监控、统计的单元测试
+│     ├─ report.go             # AI 报告生成、报告存档及导入导出
+│     └─ *_test.go             # 扫描、监控、统计与报告的单元测试
 ├─ build/                      # Wails 构建资源（图标、安装包脚本）
 └─ frontend/
    ├─ index.html
@@ -78,7 +89,7 @@
    └─ src/
       ├─ App.tsx               # 外壳：侧边栏 + 页面切换
       ├─ main.tsx / style.css  # 入口与全局样式（Tailwind）
-      ├─ lib/                  # format.ts 格式化、ui.ts 复用类名、charts.ts ECharts 注册
+      ├─ lib/                  # 格式化、图表、Markdown 清理与图片导出辅助
       ├─ stores/appStore.ts    # Zustand 状态与所有 Wails 调用
       ├─ components/           # Sidebar、Modal、EChart、ScanGamesModal、游戏表单 / 详情等
       ├─ pages/                # Dashboard、GameLibrary、StatsPage、CategoriesPage、SettingsPage
@@ -102,8 +113,8 @@
 | `tags` | 标签（名称唯一、颜色） | 读写 |
 | `game_tags` | 游戏 ↔ 标签 多对多关联表 | 读写 |
 | `play_sessions` | 单次游玩记录 | 读写（阶段 2 写入，阶段 3 聚合） |
-| `settings` | 键值配置（监控开关、扫描目录） | 读写 |
-| `reports` | AI / 导入报告 | 仅建表（阶段 4） |
+| `settings` | 键值配置（监控开关、扫描目录、AI 服务设置） | 读写 |
+| `reports` | AI / 导入报告 | 读写 |
 | `save_archives` | 本地存档记录 | 仅建表（阶段 5） |
 | `save_backups` | 存档备份历史 | 仅建表（阶段 5） |
 
@@ -129,11 +140,16 @@ GetMonitorStatus()
 
 GetStatsByPeriod(periodType, start, end)   // year / month / week，start / end 可空
 GetDashboardStats()                        // 总时长、今日 / 本周 / 本月、Top 游戏、分类占比
+
+GetAISettings() / SaveAISettings(config) / TestAIConnection()
+GenerateAIReport(request) / ListReports() / GetReport(id) / SaveReport(report) / DeleteReport(id)
+ImportReportFromFile() / ExportReportMarkdown(id) / SaveImage(base64PNG, filename)
 ```
 
 > `AddGame` / `UpdateGame` 额外返回保存后的完整记录，方便前端直接使用；标签只需传入 `{ id }`。
 > `tracker:update` 事件会在成功轮询后推送监控状态。扫描仅识别 `.exe`；`.lnk` / `.url` 与 Steam manifest 解析不在本阶段实现。
 > `GetStatsByPeriod` 的 `start` / `end` 为空时统计当前周期，同时传入按自定义范围统计；跨天会话归属开始日期。
+> AI 服务 API Key 需在桌面应用设置页输入；不要将密钥提交到版本库。生成报告会把对应周期的统计数据发送到已配置的 AI 服务。
 
 ## 运行与构建
 
@@ -153,19 +169,16 @@ wails generate module
 
 # 运行后端单元测试
 go test ./...
+
+# 前端生产构建
+cd frontend && npm run build
 ```
 
 ## 验收清单
 
-1. `go build ./...` 与 `go vet ./...` 无错误。
-2. `cd frontend && npm run build`（tsc + vite）无类型错误。
-3. `wails build` 产出 `build/bin/GameArchive.exe`。
-4. 启动应用后生成 `%AppData%\GameArchive\game_archive.db`，且包含上表全部 9 张业务表 + `sqlite_sequence`。
-5. 首次运行自动写入 9 个默认分类，标签初始为空。
-6. 阶段 1：游戏 / 分类 / 标签可新增、编辑、删除；列表搜索与筛选可用；分类删除后游戏变为未分类。
-7. 阶段 2：游戏库选择目录并扫描后可预览候选 `.exe`，可勾选、改名、选分类并导入；重复路径会跳过。
-8. 阶段 2：监控启动后运行库中已登记游戏，等待轮询后仪表盘/游戏库时长增加，`play_sessions` 保存开始、结束和秒数。
-9. 阶段 2：设置页暂停监控会结束当前会话且不再累计；继续后重新监控；正常退出时会收尾会话。
-10. 阶段 3：统计报告页可在周 / 月 / 年之间切换，上一周期 / 下一周期 / 回到当前按钮生效；趋势图按天或按月分桶，分类饼图、标签排行与 Top 游戏随周期变化。
-11. 阶段 3：仪表盘今日 / 本周 / 本月时长与统计报告页数据一致；游玩过程中图表会自动刷新。
-12. `go test ./...`、`go vet ./...` 与 `cd frontend && npm run build` 均通过；界面为中文暗色主题，错误通过提示或界面状态呈现。
+1. `go test ./...`、`go vet ./...`、`cd frontend && npm run build` 与 `wails build` 均通过。
+2. 首次启动后创建 `%AppData%\GameArchive\game_archive.db`，并保留阶段 1-3 的游戏 CRUD、扫描、监控、时长与周期统计功能。
+3. 设置 DeepSeek / OpenAI 兼容服务地址、模型与 API Key，测试连接成功。
+4. 选择有时长数据的周 / 月 / 年周期，生成报告并确认报告可在历史列表查看、删除及导出 Markdown / PNG。
+5. 导入 Markdown、文本或 JSON 报告，并确认其出现在报告历史中。
+6. 阶段 5 的本地存档与备份功能仍未实现。

@@ -26,21 +26,21 @@ export default function App() {
     const loading = useAppStore((state) => state.loading)
     const bootstrap = useAppStore((state) => state.bootstrap)
     const refreshTrackedGames = useAppStore((state) => state.refreshTrackedGames)
-        const refreshDashboardStats = useAppStore((state) => state.refreshDashboardStats)
+    const refreshDashboardStats = useAppStore((state) => state.refreshDashboardStats)
 
-        useEffect(() => {
-            void bootstrap()
-        }, [bootstrap])
+    useEffect(() => {
+        void bootstrap()
+    }, [bootstrap])
 
-        useEffect(() => {
-            const unsubscribe = EventsOn('tracker:update', (status: services.MonitorStatus) => {
-                useAppStore.setState({ monitorStatus: status })
-                void refreshTrackedGames()
-                // 游玩时长有变化时同步刷新仪表盘的统计卡片
-                void refreshDashboardStats()
-            })
-            return unsubscribe
-        }, [refreshTrackedGames, refreshDashboardStats])
+    useEffect(() => {
+        const unsubscribe = EventsOn('tracker:update', (status: services.MonitorStatus) => {
+            useAppStore.setState({ monitorStatus: status })
+            void refreshTrackedGames()
+            // 游玩时长有变化时同步刷新仪表盘的统计卡片
+            void refreshDashboardStats()
+        })
+        return unsubscribe
+    }, [refreshTrackedGames, refreshDashboardStats])
 
     const Page = PAGES[route]
 
@@ -53,16 +53,16 @@ export default function App() {
                         正在加载数据…
                     </div>
                 ) : (
-                                    <Suspense
-                                        fallback={
-                                            <div className="flex h-full items-center justify-center text-sm text-slate-500">
-                                                正在加载统计图表…
-                                            </div>
-                                        }
-                                    >
-                                        <Page />
-                                    </Suspense>
-                                )}
+                    <Suspense
+                        fallback={
+                            <div className="flex h-full items-center justify-center text-sm text-slate-500">
+                                正在加载统计图表…
+                            </div>
+                        }
+                    >
+                        <Page />
+                    </Suspense>
+                )}
             </main>
             <Toaster />
         </div>

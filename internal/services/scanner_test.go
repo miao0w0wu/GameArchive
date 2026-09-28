@@ -56,7 +56,7 @@ func TestScanGamesInDirectoryRejectsInvalidDepthAndFile(t *testing.T) {
 }
 
 func TestImportScannedGamesSkipsDuplicateExecutablePaths(t *testing.T) {
-	db := newTrackerTestDB(t)
+	db := newTestDB(t)
 	path := filepath.Join(t.TempDir(), "Sample.exe")
 	game := models.ScannedGame{
 		Name:        "Sample",

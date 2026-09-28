@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { GetStatsByPeriod } from '../../wailsjs/go/main/App'
-import type { services } from '../../wailsjs/go/models'
+import { GenerateAIReport, GetStatsByPeriod, ImportReportFromFile } from '../../wailsjs/go/main/App'
+import { services, type models } from '../../wailsjs/go/models'
 import EChart from '../components/EChart'
+import ReportModal from '../components/ReportModal'
 import { chartLineColor, chartTextColor, chartTooltipStyle, toHours } from '../lib/charts'
-import { formatDuration, formatHours } from '../lib/format'
-import { btnGhost, cardClass } from '../lib/ui'
+import { exportElementAsImage, imageExportName } from '../lib/exportImage'
+import { formatDateTime, formatDuration, formatHours } from '../lib/format'
+import { btnGhost, btnPrimary, cardClass } from '../lib/ui'
 import { extractError, useAppStore } from '../stores/appStore'
 
 type PeriodType = 'week' | 'month' | 'year'
@@ -17,6 +19,20 @@ const PERIOD_OPTIONS: { value: PeriodType; label: string; previous: string; next
 ]
 
 const RANKING_COLOR = '#6366f1'
+
+// 「报告历史」列表中展示的来源名称
+const REPORT_SOURCE_LABELS: Record<string, string> = {
+    ai: 'AI 生成',
+    import: '外部导入',
+    manual: '手动新建',
+}
+
+// 报告的统计周期类型
+const PERIOD_LABELS: Record<string, string> = {
+    year: '按年',
+    month: '按月',
+    week: '按周',
+}
 
 function pad(value: number): string {
     return String(value).padStart(2, '0')
@@ -145,12 +161,19 @@ function buildRankingOption(items: RankingInput[], unitLabel: string) {
 export default function StatsPage() {
     const notify = useAppStore((state) => state.notify)
     const monitorStatus = useAppStore((state) => state.monitorStatus)
+    const reports = useAppStore((state) => state.reports)
+    const loadReports = useAppStore((state) => state.loadReports)
 
+    // 图片导出时截取的范围（不含顶部操作栏）
+    const exportRef = useRef<HTMLDivElement>(null)
     const [periodType, setPeriodType] = useState<PeriodType>('week')
     const [anchor, setAnchor] = useState(() => new Date())
     const [result, setResult] = useState<services.StatsResult | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [generating, setGenerating] = useState(false)
+    const [exporting, setExporting] = useState(false)
+    const [openReportId, setOpenReportId] = useState<number | null>(null)
 
     const range = useMemo(() => periodRange(periodType, anchor), [periodType, anchor])
     const periodOption = useMemo(
@@ -186,9 +209,9 @@ export default function StatsPage() {
                 }
             })
         return () => {
-                    cancelled = true
-                }
-            }, [periodType, range.start, range.end, monitorStatus, notify])
+            cancelled = true
+        }
+    }, [periodType, range.start, range.end, monitorStatus, notify])
 
     const trendOption = useMemo(() => {
         const points = result?.trend ?? []
@@ -301,6 +324,55 @@ export default function StatsPage() {
 
     const hasData = (result?.totalSeconds ?? 0) > 0
 
+    const generateReport = async () => {
+        setGenerating(true)
+        try {
+            const report = await GenerateAIReport(
+                services.AIReportRequest.createFrom({
+                    periodType,
+                    start: range.start,
+                    end: range.end,
+                }),
+            )
+            await loadReports()
+            notify('success', 'AI 报告已生成并保存')
+            setOpenReportId(report.id)
+        } catch (reason) {
+            notify('error', `生成 AI 报告失败：${extractError(reason)}`)
+        } finally {
+            setGenerating(false)
+        }
+    }
+
+    const exportImage = async () => {
+        const element = exportRef.current
+        if (!element) return
+        setExporting(true)
+        try {
+            const name = imageExportName(`stats-${periodType}-${range.start}`)
+            const exported = await exportElementAsImage(element, name)
+            if (exported.saved) {
+                notify('success', `图片已导出：${exported.path}`)
+            }
+        } catch (reason) {
+            notify('error', `导出图片失败：${extractError(reason)}`)
+        } finally {
+            setExporting(false)
+        }
+    }
+
+    const importReport = async () => {
+        try {
+            const report = await ImportReportFromFile()
+            if (!report) return // 用户取消
+            await loadReports()
+            notify('success', `已导入报告「${report.title}」`)
+            setOpenReportId(report.id)
+        } catch (reason) {
+            notify('error', `导入报告失败：${extractError(reason)}`)
+        }
+    }
+
     return (
         <div className="mx-auto max-w-6xl px-8 py-8">
             <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -333,20 +405,39 @@ export default function StatsPage() {
                         className={btnGhost}
                         onClick={() => setAnchor((current) => shiftAnchor(periodType, current, -1))}
                     >
-                                            {periodOption.previous}
+                        {periodOption.previous}
                     </button>
                     <button
                         type="button"
                         className={btnGhost}
                         onClick={() => setAnchor((current) => shiftAnchor(periodType, current, 1))}
                     >
-                                            {periodOption.next}
+                        {periodOption.next}
                     </button>
                     {!isCurrentPeriod ? (
                         <button type="button" className={btnGhost} onClick={() => setAnchor(new Date())}>
                             回到当前
                         </button>
                     ) : null}
+                    <button
+                        type="button"
+                        className={btnGhost}
+                        onClick={() => void exportImage()}
+                        disabled={exporting || loading}
+                    >
+                        {exporting ? '导出中…' : '导出图片'}
+                    </button>
+                    <button type="button" className={btnGhost} onClick={() => void importReport()}>
+                        导入报告
+                    </button>
+                    <button
+                        type="button"
+                        className={btnPrimary}
+                        onClick={() => void generateReport()}
+                        disabled={generating || loading || !hasData}
+                    >
+                        {generating ? '生成中…' : '生成 AI 报告'}
+                    </button>
                 </div>
             </header>
 
@@ -367,93 +458,163 @@ export default function StatsPage() {
                 </div>
             ) : null}
 
-            <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                <div className={`${cardClass} p-4`}>
-                    <p className="text-xs text-slate-500">周期内时长</p>
-                    <p className="mt-1 text-xl font-semibold text-slate-100">
-                        {formatHours(result?.totalSeconds ?? 0)}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                        {formatDuration(result?.totalSeconds ?? 0)}
-                    </p>
+            <div ref={exportRef} className="rounded-2xl bg-slate-950/40 p-3">
+                <div className="mb-4 px-1">
+                    <h2 className="text-lg font-semibold text-slate-100">{range.label} 游玩统计</h2>
+                    <p className="mt-1 text-xs text-slate-500">{range.start} ~ {range.end}</p>
                 </div>
-                <div className={`${cardClass} p-4`}>
-                    <p className="text-xs text-slate-500">游玩天数</p>
-                    <p className="mt-1 text-xl font-semibold text-slate-100">{result?.activeDays ?? 0}</p>
-                    <p className="mt-1 text-xs text-slate-500">天</p>
-                </div>
-                <div className={`${cardClass} p-4`}>
-                    <p className="text-xs text-slate-500">日均时长</p>
-                    <p className="mt-1 text-xl font-semibold text-slate-100">
-                        {formatHours(result?.dailyAverage ?? 0)}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">按游玩天数平均</p>
-                </div>
-                <div className={`${cardClass} p-4`}>
-                    <p className="text-xs text-slate-500">游玩游戏数</p>
-                    <p className="mt-1 text-xl font-semibold text-slate-100">
-                        {result?.playedGameCount ?? 0}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">个</p>
-                </div>
-                <div className={`${cardClass} p-4`}>
-                    <p className="text-xs text-slate-500">游玩次数</p>
-                    <p className="mt-1 text-xl font-semibold text-slate-100">{result?.sessionCount ?? 0}</p>
-                    <p className="mt-1 text-xs text-slate-500">次</p>
-                </div>
-            </section>
-
-            {!loading && !hasData ? (
-                <div className={`${cardClass} mt-5 p-10 text-center text-sm text-slate-500`}>
-                    该周期暂无游玩记录，先启动游戏让进程监控累计时长吧。
-                </div>
-            ) : null}
-
-            {hasData ? (
-                <>
-                    <section className={`${cardClass} mt-5 p-5`}>
-                        <h2 className="text-sm font-semibold text-slate-200">时长趋势</h2>
-                        <p className="mt-1 text-xs text-slate-500">
-                            按 {result?.bucketUnit === 'month' ? '月' : '天'}统计的游玩小时数。
+                <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                    <div className={`${cardClass} p-4`}>
+                        <p className="text-xs text-slate-500">周期内时长</p>
+                        <p className="mt-1 text-xl font-semibold text-slate-100">
+                            {formatHours(result?.totalSeconds ?? 0)}
                         </p>
-                        <EChart option={trendOption} height={300} className="mt-3" />
-                    </section>
+                        <p className="mt-1 text-xs text-slate-500">
+                            {formatDuration(result?.totalSeconds ?? 0)}
+                        </p>
+                    </div>
+                    <div className={`${cardClass} p-4`}>
+                        <p className="text-xs text-slate-500">游玩天数</p>
+                        <p className="mt-1 text-xl font-semibold text-slate-100">{result?.activeDays ?? 0}</p>
+                        <p className="mt-1 text-xs text-slate-500">天</p>
+                    </div>
+                    <div className={`${cardClass} p-4`}>
+                        <p className="text-xs text-slate-500">日均时长</p>
+                        <p className="mt-1 text-xl font-semibold text-slate-100">
+                            {formatHours(result?.dailyAverage ?? 0)}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">按游玩天数平均</p>
+                    </div>
+                    <div className={`${cardClass} p-4`}>
+                        <p className="text-xs text-slate-500">游玩游戏数</p>
+                        <p className="mt-1 text-xl font-semibold text-slate-100">
+                            {result?.playedGameCount ?? 0}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">个</p>
+                    </div>
+                    <div className={`${cardClass} p-4`}>
+                        <p className="text-xs text-slate-500">游玩次数</p>
+                        <p className="mt-1 text-xl font-semibold text-slate-100">{result?.sessionCount ?? 0}</p>
+                        <p className="mt-1 text-xs text-slate-500">次</p>
+                    </div>
+                </section>
 
-                    <section className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                        <div className={`${cardClass} p-5`}>
-                            <h2 className="text-sm font-semibold text-slate-200">分类时长占比</h2>
-                            <p className="mt-1 text-xs text-slate-500">按游戏所属分类汇总，多标签游戏会重复计入标签统计。</p>
-                            {(result?.categories.length ?? 0) === 0 ? (
-                                <div className="py-10 text-center text-sm text-slate-500">暂无分类数据</div>
-                            ) : (
-                                <EChart option={categoryOption} height={300} className="mt-3" />
-                            )}
-                        </div>
+                {!loading && !hasData ? (
+                    <div className={`${cardClass} mt-5 p-10 text-center text-sm text-slate-500`}>
+                        该周期暂无游玩记录，先启动游戏让进程监控累计时长吧。
+                    </div>
+                ) : null}
 
-                        <div className={`${cardClass} p-5`}>
-                            <h2 className="text-sm font-semibold text-slate-200">标签时长排行</h2>
-                            <p className="mt-1 text-xs text-slate-500">同一游戏的多个标签都会获得该次游玩时长。</p>
-                            {(result?.tags.length ?? 0) === 0 ? (
-                                <div className="py-10 text-center text-sm text-slate-500">
-                                    暂无标签数据，可在「分类与标签」页为游戏添加标签
-                                </div>
-                            ) : (
-                                <EChart option={tagOption} height={300} className="mt-3" />
-                            )}
-                        </div>
-                    </section>
+                {hasData ? (
+                    <>
+                        <section className={`${cardClass} mt-5 p-5`}>
+                            <h2 className="text-sm font-semibold text-slate-200">时长趋势</h2>
+                            <p className="mt-1 text-xs text-slate-500">
+                                按 {result?.bucketUnit === 'month' ? '月' : '天'}统计的游玩小时数。
+                            </p>
+                            <EChart option={trendOption} height={300} className="mt-3" />
+                        </section>
 
-                    <section className={`${cardClass} mt-5 p-5`}>
-                        <h2 className="text-sm font-semibold text-slate-200">Top 游戏</h2>
-                        <p className="mt-1 text-xs text-slate-500">周期内游玩时长最多的前 10 个游戏。</p>
-                        <EChart option={topGameOption} height={Math.max(220, (result?.topGames.length ?? 0) * 42)} className="mt-3" />
-                    </section>
-                </>
-            ) : null}
+                        <section className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                            <div className={`${cardClass} p-5`}>
+                                <h2 className="text-sm font-semibold text-slate-200">分类时长占比</h2>
+                                <p className="mt-1 text-xs text-slate-500">
+                                    按游戏所属分类汇总，多标签游戏会重复计入标签统计。
+                                </p>
+                                {(result?.categories.length ?? 0) === 0 ? (
+                                    <div className="py-10 text-center text-sm text-slate-500">暂无分类数据</div>
+                                ) : (
+                                    <EChart option={categoryOption} height={300} className="mt-3" />
+                                )}
+                            </div>
+
+                            <div className={`${cardClass} p-5`}>
+                                <h2 className="text-sm font-semibold text-slate-200">标签时长排行</h2>
+                                <p className="mt-1 text-xs text-slate-500">
+                                    同一游戏的多个标签都会获得该次游玩时长。
+                                </p>
+                                {(result?.tags.length ?? 0) === 0 ? (
+                                    <div className="py-10 text-center text-sm text-slate-500">
+                                        暂无标签数据，可在「分类与标签」页为游戏添加标签
+                                    </div>
+                                ) : (
+                                    <EChart option={tagOption} height={300} className="mt-3" />
+                                )}
+                            </div>
+                        </section>
+
+                        <section className={`${cardClass} mt-5 p-5`}>
+                            <h2 className="text-sm font-semibold text-slate-200">Top 游戏</h2>
+                            <p className="mt-1 text-xs text-slate-500">周期内游玩时长最多的前 10 个游戏。</p>
+                            <EChart
+                                option={topGameOption}
+                                height={Math.max(220, (result?.topGames.length ?? 0) * 42)}
+                                className="mt-3"
+                            />
+                        </section>
+                    </>
+                ) : null}
+            </div>
+
+            {exporting ? <p className="mt-3 text-xs text-slate-500">正在生成图片…</p> : null}
+
+            <section className={`${cardClass} mt-5 p-5`}>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h2 className="text-sm font-semibold text-slate-200">报告历史</h2>
+                        <p className="mt-1 text-xs text-slate-500">
+                            共 {reports.length} 份报告；可查看、导出为 Markdown 或图片，也可导入外部报告。
+                        </p>
+                    </div>
+                    <button type="button" className={btnGhost} onClick={() => void loadReports()} disabled={loading}>
+                        刷新列表
+                    </button>
+                </div>
+
+                {reports.length === 0 ? (
+                    <div className="py-8 text-center text-sm text-slate-500">
+                        还没有报告。有游玩数据时可点右上角「生成 AI 报告」，或「导入报告」载入外部报告文件。
+                    </div>
+                ) : (
+                    <ul className="mt-4 divide-y divide-slate-800/70">
+                        {reports.map((report) => (
+                            <li key={report.id} className="flex flex-wrap items-center gap-3 py-3">
+                                <button
+                                    type="button"
+                                    className="min-w-0 flex-1 text-left"
+                                    onClick={() => setOpenReportId(report.id)}
+                                >
+                                    <span className="block truncate text-sm text-slate-200 hover:text-indigo-300">
+                                        {report.title}
+                                    </span>
+                                    <span className="mt-0.5 block text-xs text-slate-500">
+                                        {REPORT_SOURCE_LABELS[report.source] ?? '报告'}
+                                        {report.periodType
+                                            ? ` · ${PERIOD_LABELS[report.periodType] ?? report.periodType}`
+                                            : ''}
+                                        {report.createdAt ? ` · ${formatDateTime(report.createdAt)}` : ''}
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    className={btnGhost}
+                                    onClick={() => setOpenReportId(report.id)}
+                                >
+                                    查看
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </section>
 
             <p className="mt-3 text-xs text-slate-500">
                 数据来自进程监控记录的游玩会话；跨天会话归属到开始日期，与游戏累计时长口径一致。
             </p>
+
+            {openReportId !== null ? (
+                <ReportModal reportId={openReportId} onClose={() => setOpenReportId(null)} />
+            ) : null}
         </div>
     )
 }

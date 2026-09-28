@@ -114,7 +114,7 @@ func TestResolvePeriodWindowRejectsInvalidInput(t *testing.T) {
 }
 
 func TestGetStatsByPeriodAggregatesSessions(t *testing.T) {
-	db := newTrackerTestDB(t)
+	db := newTestDB(t)
 	service := &StatsService{db: db}
 
 	action := models.Category{Name: "动作", Color: "#ef4444"}
@@ -220,7 +220,7 @@ func TestGetStatsByPeriodAggregatesSessions(t *testing.T) {
 }
 
 func TestGetStatsByPeriodEmptyResultHasEmptySlices(t *testing.T) {
-	db := newTrackerTestDB(t)
+	db := newTestDB(t)
 	result, err := (&StatsService{db: db}).GetStatsByPeriod(PeriodMonth, "", "")
 	if err != nil {
 		t.Fatalf("GetStatsByPeriod() error = %v", err)
@@ -237,7 +237,7 @@ func TestGetStatsByPeriodEmptyResultHasEmptySlices(t *testing.T) {
 }
 
 func TestGetDashboardStatsWindows(t *testing.T) {
-	db := newTrackerTestDB(t)
+	db := newTestDB(t)
 	service := &StatsService{db: db}
 
 	alpha := models.Game{Name: "Alpha", TotalSeconds: 5000}

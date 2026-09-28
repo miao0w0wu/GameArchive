@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"image/png"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,7 +23,7 @@ const (
 	// AppVersion 应用版本号。
 	AppVersion = "0.1.0"
 	// StageName 当前实现阶段，展示在设置页以便区分尚未实现的功能。
-	StageName = "阶段 3：统计图表 + 按年 / 月 / 周分析"
+	StageName = "阶段 4：AI 报告 + 图片导出 + 报告导入导出"
 )
 
 const (
@@ -340,6 +343,182 @@ func (a *App) GetDashboardStats() (services.StatsOverview, error) {
 		return services.StatsOverview{}, err
 	}
 	return a.svc.Stats.GetDashboardStats()
+}
+
+// ------------------------------------------------------------- AI 报告与导入导出
+
+// GetAISettings 返回 AI 接口配置（API Key 保存在本机数据库，不会写入日志）。
+func (a *App) GetAISettings() (services.AIConfig, error) {
+	if err := a.ready(); err != nil {
+		return services.AIConfig{}, err
+	}
+	return a.svc.Report.GetAIConfig()
+}
+
+// SaveAISettings 保存 AI 接口配置。
+func (a *App) SaveAISettings(config services.AIConfig) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.svc.Report.SaveAIConfig(config)
+}
+
+// TestAIConnection 用当前配置请求一次接口，验证地址、密钥与模型是否可用。
+func (a *App) TestAIConnection() error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.svc.Report.TestConnection()
+}
+
+// GenerateAIReport 依据统计数据调用 OpenAI 兼容接口生成 Markdown 报告并保存。
+func (a *App) GenerateAIReport(req services.AIReportRequest) (*models.Report, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
+	return a.svc.Report.GenerateAIReport(req)
+}
+
+// ListReports 返回报告列表（不含正文）。
+func (a *App) ListReports() ([]models.Report, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
+	return a.svc.Report.List()
+}
+
+// GetReport 返回报告详情（含 Markdown 正文）。
+func (a *App) GetReport(id uint) (*models.Report, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
+	return a.svc.Report.Get(id)
+}
+
+// DeleteReport 删除报告。
+func (a *App) DeleteReport(id uint) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.svc.Report.Delete(id)
+}
+
+// SaveReport 保存报告正文（用于编辑后的保存或手动新建）。
+func (a *App) SaveReport(report models.Report) (*models.Report, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
+	return a.svc.Report.Save(report)
+}
+
+// ImportReportFromFile 弹出文件选择框，从 .json / .md / .txt 导入外部报告。
+func (a *App) ImportReportFromFile() (*models.Report, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
+	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "导入报告",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "报告文件 (*.md;*.markdown;*.txt;*.json)", Pattern: "*.md;*.markdown;*.txt;*.json"},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("选择报告文件失败: %w", err)
+	}
+	if strings.TrimSpace(path) == "" {
+		return nil, nil // 用户取消选择
+	}
+	report, err := a.svc.Report.ImportFromFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return report, nil
+}
+
+// ExportReportMarkdown 弹出保存对话框，把报告正文导出为 Markdown 文件。
+// 返回保存路径；用户取消时返回空字符串。
+func (a *App) ExportReportMarkdown(id uint) (string, error) {
+	if err := a.ready(); err != nil {
+		return "", err
+	}
+	content, filename, err := a.svc.Report.ExportMarkdown(id)
+	if err != nil {
+		return "", err
+	}
+	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "导出报告",
+		DefaultFilename: filename,
+		Filters: []runtime.FileFilter{
+			{DisplayName: "Markdown 文件 (*.md)", Pattern: "*.md"},
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("选择保存位置失败: %w", err)
+	}
+	if strings.TrimSpace(path) == "" {
+		return "", nil // 用户取消保存
+	}
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		return "", fmt.Errorf("写入报告文件失败: %w", err)
+	}
+	return path, nil
+}
+
+// SaveImage 由前端传入 base64 图片数据（不含 dataURL 前缀），弹出保存对话框写入 PNG。
+// 返回保存路径；用户取消时返回空字符串。
+func (a *App) SaveImage(base64Data string, defaultName string) (string, error) {
+	if err := a.ready(); err != nil {
+		return "", err
+	}
+	data := strings.TrimSpace(base64Data)
+	if data == "" {
+		return "", errors.New("图片数据为空")
+	}
+	if len(data) > 32<<20 {
+		return "", errors.New("图片数据超过 24 MiB 限制")
+	}
+	raw, err := base64.StdEncoding.DecodeString(data)
+	if err != nil {
+		return "", fmt.Errorf("解析图片数据失败: %w", err)
+	}
+	if len(raw) > 24<<20 {
+		return "", errors.New("图片数据超过 24 MiB 限制")
+	}
+	config, err := png.DecodeConfig(bytes.NewReader(raw))
+	if err != nil {
+		return "", fmt.Errorf("图片数据不是有效的 PNG: %w", err)
+	}
+	if config.Width <= 0 || config.Height <= 0 || config.Width > 20000 || config.Height > 20000 ||
+		int64(config.Width)*int64(config.Height) > 100_000_000 {
+		return "", errors.New("图片尺寸无效或超过支持范围")
+	}
+
+	name := strings.TrimSpace(defaultName)
+	if name == "" {
+		name = "game-archive"
+	}
+	if !strings.HasSuffix(strings.ToLower(name), ".png") {
+		name += ".png"
+	}
+
+	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "导出图片",
+		DefaultFilename: name,
+		Filters: []runtime.FileFilter{
+			{DisplayName: "PNG 图片 (*.png)", Pattern: "*.png"},
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("选择保存位置失败: %w", err)
+	}
+	if strings.TrimSpace(path) == "" {
+		return "", nil // 用户取消保存
+	}
+
+	if err := os.WriteFile(path, raw, 0o644); err != nil {
+		return "", fmt.Errorf("写入图片失败: %w", err)
+	}
+	return path, nil
 }
 
 // ------------------------------------------------------------- 分类 CRUD

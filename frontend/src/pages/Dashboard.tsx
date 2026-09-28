@@ -7,7 +7,6 @@ import { cardClass } from '../lib/ui'
 import { useAppStore } from '../stores/appStore'
 
 const ROADMAP = [
-    '阶段 4：AI 报告 + 图片导出 + 报告导入导出',
     '阶段 5：本地存档导入 / 备份 / 备份历史',
 ]
 

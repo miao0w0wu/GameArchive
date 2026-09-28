@@ -1,5 +1,5 @@
 export namespace main {
-	
+
 	export class AppInfo {
 	    appName: string;
 	    version: string;
@@ -11,11 +11,11 @@ export namespace main {
 	    gameCount: number;
 	    categoryCount: number;
 	    tagCount: number;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new AppInfo(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.appName = source["appName"];
@@ -34,7 +34,7 @@ export namespace main {
 }
 
 export namespace models {
-	
+
 	export class Category {
 	    id: number;
 	    name: string;
@@ -44,11 +44,11 @@ export namespace models {
 	    createdAt: any;
 	    // Go type: time
 	    updatedAt: any;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new Category(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -58,7 +58,7 @@ export namespace models {
 	        this.createdAt = this.convertValues(source["createdAt"], null);
 	        this.updatedAt = this.convertValues(source["updatedAt"], null);
 	    }
-	
+
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -85,11 +85,11 @@ export namespace models {
 	    createdAt: any;
 	    // Go type: time
 	    updatedAt: any;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new Tag(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -98,7 +98,7 @@ export namespace models {
 	        this.createdAt = this.convertValues(source["createdAt"], null);
 	        this.updatedAt = this.convertValues(source["updatedAt"], null);
 	    }
-	
+
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -134,11 +134,11 @@ export namespace models {
 	    createdAt: any;
 	    // Go type: time
 	    updatedAt: any;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new Game(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -155,7 +155,54 @@ export namespace models {
 	        this.createdAt = this.convertValues(source["createdAt"], null);
 	        this.updatedAt = this.convertValues(source["updatedAt"], null);
 	    }
-	
+
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class Report {
+	    id: number;
+	    title: string;
+	    periodType: string;
+	    // Go type: time
+	    periodStart?: any;
+	    // Go type: time
+	    periodEnd?: any;
+	    content: string;
+	    source: string;
+	    // Go type: time
+	    createdAt: any;
+
+	    static createFrom(source: any = {}) {
+	        return new Report(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.title = source["title"];
+	        this.periodType = source["periodType"];
+	        this.periodStart = this.convertValues(source["periodStart"], null);
+	        this.periodEnd = this.convertValues(source["periodEnd"], null);
+	        this.content = source["content"];
+	        this.source = source["source"];
+	        this.createdAt = this.convertValues(source["createdAt"], null);
+	    }
+
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -182,11 +229,11 @@ export namespace models {
 	    sizeBytes: number;
 	    suggestedCategory: string;
 	    categoryId?: number;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new ScannedGame(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
@@ -202,18 +249,54 @@ export namespace models {
 }
 
 export namespace services {
-	
+
+	export class AIConfig {
+	    baseUrl: string;
+	    apiKey: string;
+	    model: string;
+
+	    static createFrom(source: any = {}) {
+	        return new AIConfig(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.baseUrl = source["baseUrl"];
+	        this.apiKey = source["apiKey"];
+	        this.model = source["model"];
+	    }
+	}
+	export class AIReportRequest {
+	    periodType: string;
+	    start: string;
+	    end: string;
+	    title: string;
+	    instruction: string;
+
+	    static createFrom(source: any = {}) {
+	        return new AIReportRequest(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.periodType = source["periodType"];
+	        this.start = source["start"];
+	        this.end = source["end"];
+	        this.title = source["title"];
+	        this.instruction = source["instruction"];
+	    }
+	}
 	export class ActiveGame {
 	    gameId: number;
 	    name: string;
 	    // Go type: time
 	    startedAt: any;
 	    durationSeconds: number;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new ActiveGame(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.gameId = source["gameId"];
@@ -221,7 +304,7 @@ export namespace services {
 	        this.startedAt = this.convertValues(source["startedAt"], null);
 	        this.durationSeconds = source["durationSeconds"];
 	    }
-	
+
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -246,11 +329,11 @@ export namespace services {
 	    seconds: number;
 	    percent: number;
 	    gameCount: number;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new BreakdownItem(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
@@ -279,11 +362,11 @@ export namespace services {
 	    updatedAt: any;
 	    tagNames: string[];
 	    totalHours: number;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new GameDetail(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -302,7 +385,7 @@ export namespace services {
 	        this.tagNames = source["tagNames"];
 	        this.totalHours = source["totalHours"];
 	    }
-	
+
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -330,11 +413,11 @@ export namespace services {
 	    percent: number;
 	    // Go type: time
 	    lastPlayedAt?: any;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new GameRankItem(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.gameId = source["gameId"];
@@ -345,7 +428,7 @@ export namespace services {
 	        this.percent = source["percent"];
 	        this.lastPlayedAt = this.convertValues(source["lastPlayedAt"], null);
 	    }
-	
+
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -367,11 +450,11 @@ export namespace services {
 	export class ImportResult {
 	    imported: number;
 	    skipped: number;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new ImportResult(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.imported = source["imported"];
@@ -381,17 +464,17 @@ export namespace services {
 	export class MonitorStatus {
 	    running: boolean;
 	    activeGames: ActiveGame[];
-	
+
 	    static createFrom(source: any = {}) {
 	        return new MonitorStatus(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.running = source["running"];
 	        this.activeGames = this.convertValues(source["activeGames"], ActiveGame);
 	    }
-	
+
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -419,11 +502,11 @@ export namespace services {
 	    gameCount: number;
 	    topGames: GameRankItem[];
 	    categories: BreakdownItem[];
-	
+
 	    static createFrom(source: any = {}) {
 	        return new StatsOverview(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.totalSeconds = source["totalSeconds"];
@@ -435,7 +518,7 @@ export namespace services {
 	        this.topGames = this.convertValues(source["topGames"], GameRankItem);
 	        this.categories = this.convertValues(source["categories"], BreakdownItem);
 	    }
-	
+
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -458,11 +541,11 @@ export namespace services {
 	    label: string;
 	    seconds: number;
 	    sessions: number;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new TrendPoint(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.label = source["label"];
@@ -484,11 +567,11 @@ export namespace services {
 	    categories: BreakdownItem[];
 	    tags: BreakdownItem[];
 	    topGames: GameRankItem[];
-	
+
 	    static createFrom(source: any = {}) {
 	        return new StatsResult(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.periodType = source["periodType"];
@@ -505,7 +588,7 @@ export namespace services {
 	        this.tags = this.convertValues(source["tags"], BreakdownItem);
 	        this.topGames = this.convertValues(source["topGames"], GameRankItem);
 	    }
-	
+
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;

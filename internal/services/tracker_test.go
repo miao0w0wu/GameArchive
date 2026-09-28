@@ -1,37 +1,15 @@
 package services
 
 import (
-	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/glebarez/sqlite"
-	"gorm.io/gorm"
-
 	"GameArchive/internal/models"
 )
 
-func newTrackerTestDB(t *testing.T) *gorm.DB {
-	t.Helper()
-	db, err := gorm.Open(sqlite.Open(fmt.Sprintf("file:%s?mode=memory&cache=shared", t.Name())), &gorm.Config{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := db.AutoMigrate(&models.Category{}, &models.Tag{}, &models.Game{}, &models.PlaySession{}); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		sqlDB, err := db.DB()
-		if err == nil {
-			_ = sqlDB.Close()
-		}
-	})
-	return db
-}
-
 func TestTrackerAccountsAndClosesSession(t *testing.T) {
-	db := newTrackerTestDB(t)
+	db := newTestDB(t)
 	game := models.Game{Name: "Sample Game", ProcessName: "sample.exe"}
 	if err := db.Create(&game).Error; err != nil {
 		t.Fatal(err)
@@ -105,7 +83,7 @@ func TestIsGameRunningMatchesPathBeforeNameFallback(t *testing.T) {
 }
 
 func TestRecoverClosesAbandonedSessionWithoutCountingDowntime(t *testing.T) {
-	db := newTrackerTestDB(t)
+	db := newTestDB(t)
 	game := models.Game{Name: "Sample Game", TotalSeconds: 12}
 	if err := db.Create(&game).Error; err != nil {
 		t.Fatal(err)

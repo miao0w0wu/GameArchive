@@ -13,8 +13,8 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
     { route: 'dashboard', label: '仪表盘', description: '总览', icon: <IconDashboard /> },
     { route: 'library', label: '游戏库', description: '游戏增删改查', icon: <IconLibrary /> },
-        { route: 'stats', label: '统计报告', description: '年 / 月 / 周分析', icon: <IconChart /> },
-        { route: 'categories', label: '分类与标签', description: '分类 / 标签管理', icon: <IconTags /> },
+    { route: 'stats', label: '统计报告', description: '年 / 月 / 周分析', icon: <IconChart /> },
+    { route: 'categories', label: '分类与标签', description: '分类 / 标签管理', icon: <IconTags /> },
     { route: 'settings', label: '设置', description: '数据目录', icon: <IconSettings /> },
 ]
 
@@ -84,7 +84,7 @@ export default function Sidebar() {
             <div className="border-t border-slate-800 px-5 py-4 text-xs text-slate-500">
                 <p>版本 {appInfo?.version ?? '0.1.0'}</p>
                 <p className="mt-1 leading-relaxed text-slate-600">
-                                    阶段 3：统计图表 / 周期分析
+                                                    阶段 4：AI 报告 / 图片导出
                 </p>
             </div>
         </aside>

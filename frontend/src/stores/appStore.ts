@@ -13,10 +13,11 @@ import {
     DeleteGame,
     DeleteTag,
     GetAppInfo,
-        GetDashboardStats,
-        GetMonitorStatus,
+    GetDashboardStats,
+    GetMonitorStatus,
     ListCategories,
     ListGames,
+    ListReports,
     ListTags,
     UpdateCategory,
     UpdateGame,
@@ -81,11 +82,13 @@ interface AppState {
     games: models.Game[]
     categories: models.Category[]
     tags: models.Tag[]
+    /** 报告列表（不含正文）。 */
+    reports: models.Report[]
     appInfo: main.AppInfo | null
     monitorStatus: services.MonitorStatus | null
-        /** 仪表盘汇总统计（总时长、今日 / 本周 / 本月、Top 游戏、分类占比）。 */
-        dashboardStats: services.StatsOverview | null
-        toasts: Toast[]
+    /** 仪表盘汇总统计（总时长、今日 / 本周 / 本月、Top 游戏、分类占比）。 */
+    dashboardStats: services.StatsOverview | null
+    toasts: Toast[]
 
     navigate: (route: Route) => void
     notify: (kind: ToastKind, message: string) => void
@@ -94,8 +97,9 @@ interface AppState {
     bootstrap: () => Promise<void>
     refreshAll: () => Promise<void>
     refreshTrackedGames: () => Promise<void>
-        refreshDashboardStats: () => Promise<void>
-        setMonitorEnabled: (enabled: boolean) => Promise<void>
+    refreshDashboardStats: () => Promise<void>
+    loadReports: () => Promise<void>
+    setMonitorEnabled: (enabled: boolean) => Promise<void>
 
     saveGame: (input: GameInput, id?: number) => Promise<boolean>
     removeGame: (id: number) => Promise<void>
@@ -114,9 +118,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     games: [],
     categories: [],
     tags: [],
+    reports: [],
     appInfo: null,
     monitorStatus: null,
-        dashboardStats: null,
+    dashboardStats: null,
     toasts: [],
 
     navigate: (route) => set({ route }),
@@ -140,15 +145,17 @@ export const useAppStore = create<AppState>((set, get) => ({
     refreshAll: async () => {
         set({ refreshing: true })
         try {
-            const [games, categories, tags, appInfo, monitorStatus, dashboardStats] = await Promise.all([
-                ListGames(),
-                ListCategories(),
-                ListTags(),
-                GetAppInfo(),
-                GetMonitorStatus(),
-                            GetDashboardStats(),
-                        ])
-                        set({ games, categories, tags, appInfo, monitorStatus, dashboardStats })
+            const [games, categories, tags, reports, appInfo, monitorStatus, dashboardStats] =
+                await Promise.all([
+                    ListGames(),
+                    ListCategories(),
+                    ListTags(),
+                    ListReports(),
+                    GetAppInfo(),
+                    GetMonitorStatus(),
+                    GetDashboardStats(),
+                ])
+            set({ games, categories, tags, reports, appInfo, monitorStatus, dashboardStats })
         } catch (error) {
             get().notify('error', `加载数据失败：${extractError(error)}`)
         } finally {
@@ -165,14 +172,23 @@ export const useAppStore = create<AppState>((set, get) => ({
         }
     },
 
-        refreshDashboardStats: async () => {
-            try {
-                const dashboardStats = await GetDashboardStats()
-                set({ dashboardStats })
-            } catch (error) {
-                get().notify('error', `刷新统计数据失败：${extractError(error)}`)
-            }
-        },
+    refreshDashboardStats: async () => {
+        try {
+            const dashboardStats = await GetDashboardStats()
+            set({ dashboardStats })
+        } catch (error) {
+            get().notify('error', `刷新统计数据失败：${extractError(error)}`)
+        }
+    },
+
+    loadReports: async () => {
+        try {
+            const reports = await ListReports()
+            set({ reports })
+        } catch (error) {
+            get().notify('error', `加载报告列表失败：${extractError(error)}`)
+        }
+    },
 
     setMonitorEnabled: async (enabled) => {
         try {

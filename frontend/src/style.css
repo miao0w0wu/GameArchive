@@ -51,3 +51,134 @@ button {
     background-color: rgb(99 102 241);
     color: white;
 }
+
+/*
+ * Markdown 报告正文样式（未引入 typography 插件，这里手写暗色主题样式）。
+ */
+.markdown-body {
+    font-size: 0.875rem;
+    line-height: 1.75;
+    color: rgb(226 232 240);
+    word-break: break-word;
+}
+
+.markdown-body > *:first-child {
+    margin-top: 0;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+    margin: 1.4em 0 0.6em;
+    font-weight: 600;
+    line-height: 1.35;
+    color: rgb(241 245 249);
+}
+
+.markdown-body h1 {
+    font-size: 1.35rem;
+}
+
+.markdown-body h2 {
+    font-size: 1.15rem;
+}
+
+.markdown-body h3 {
+    font-size: 1rem;
+}
+
+.markdown-body p {
+    margin: 0.75em 0;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+    margin: 0.75em 0;
+    padding-left: 1.4em;
+}
+
+.markdown-body ul {
+    list-style: disc;
+}
+
+.markdown-body ol {
+    list-style: decimal;
+}
+
+.markdown-body li {
+    margin: 0.3em 0;
+}
+
+.markdown-body a {
+    color: rgb(129 140 248);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.markdown-body strong {
+    font-weight: 600;
+    color: rgb(248 250 252);
+}
+
+.markdown-body code {
+    padding: 0.15em 0.4em;
+    border-radius: 0.375rem;
+    background-color: rgb(15 23 42);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    color: rgb(165 180 252);
+}
+
+.markdown-body pre {
+    margin: 0.9em 0;
+    padding: 0.9em 1em;
+    overflow-x: auto;
+    border: 1px solid rgb(30 41 59);
+    border-radius: 0.75rem;
+    background-color: rgb(2 6 23);
+}
+
+.markdown-body pre code {
+    padding: 0;
+    background: none;
+    color: rgb(203 213 225);
+}
+
+.markdown-body blockquote {
+    margin: 0.9em 0;
+    padding: 0.4em 1em;
+    border-left: 3px solid rgb(99 102 241);
+    background-color: rgb(15 23 42 / 0.6);
+    color: rgb(148 163 184);
+}
+
+.markdown-body table {
+    width: 100%;
+    margin: 0.9em 0;
+    border-collapse: collapse;
+    font-size: 0.85em;
+}
+
+.markdown-body th,
+.markdown-body td {
+    padding: 0.5em 0.75em;
+    border: 1px solid rgb(30 41 59);
+    text-align: left;
+}
+
+.markdown-body th {
+    background-color: rgb(15 23 42);
+    color: rgb(226 232 240);
+}
+
+.markdown-body hr {
+    margin: 1.4em 0;
+    border: 0;
+    border-top: 1px solid rgb(30 41 59);
+}
+
+.markdown-body img {
+    max-width: 100%;
+    border-radius: 0.5rem;
+}

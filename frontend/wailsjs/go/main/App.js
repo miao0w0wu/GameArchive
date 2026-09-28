@@ -26,8 +26,24 @@ export function DeleteGame(arg1) {
   return window['go']['main']['App']['DeleteGame'](arg1);
 }
 
+export function DeleteReport(arg1) {
+  return window['go']['main']['App']['DeleteReport'](arg1);
+}
+
 export function DeleteTag(arg1) {
   return window['go']['main']['App']['DeleteTag'](arg1);
+}
+
+export function ExportReportMarkdown(arg1) {
+  return window['go']['main']['App']['ExportReportMarkdown'](arg1);
+}
+
+export function GenerateAIReport(arg1) {
+  return window['go']['main']['App']['GenerateAIReport'](arg1);
+}
+
+export function GetAISettings() {
+  return window['go']['main']['App']['GetAISettings']();
 }
 
 export function GetAppInfo() {
@@ -50,8 +66,16 @@ export function GetMonitorStatus() {
   return window['go']['main']['App']['GetMonitorStatus']();
 }
 
+export function GetReport(arg1) {
+  return window['go']['main']['App']['GetReport'](arg1);
+}
+
 export function GetStatsByPeriod(arg1, arg2, arg3) {
   return window['go']['main']['App']['GetStatsByPeriod'](arg1, arg2, arg3);
+}
+
+export function ImportReportFromFile() {
+  return window['go']['main']['App']['ImportReportFromFile']();
 }
 
 export function ImportScannedGames(arg1) {
@@ -66,8 +90,24 @@ export function ListGames() {
   return window['go']['main']['App']['ListGames']();
 }
 
+export function ListReports() {
+  return window['go']['main']['App']['ListReports']();
+}
+
 export function ListTags() {
   return window['go']['main']['App']['ListTags']();
+}
+
+export function SaveAISettings(arg1) {
+  return window['go']['main']['App']['SaveAISettings'](arg1);
+}
+
+export function SaveImage(arg1, arg2) {
+  return window['go']['main']['App']['SaveImage'](arg1, arg2);
+}
+
+export function SaveReport(arg1) {
+  return window['go']['main']['App']['SaveReport'](arg1);
 }
 
 export function ScanGamesInDirectory(arg1, arg2) {
@@ -84,6 +124,10 @@ export function StartMonitor() {
 
 export function StopMonitor() {
   return window['go']['main']['App']['StopMonitor']();
+}
+
+export function TestAIConnection() {
+  return window['go']['main']['App']['TestAIConnection']();
 }
 
 export function UpdateCategory(arg1) {
