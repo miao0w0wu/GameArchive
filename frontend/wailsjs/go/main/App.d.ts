@@ -10,13 +10,21 @@ export function AddGame(arg1:models.Game):Promise<models.Game>;
 
 export function AddGameDirectory(arg1:string):Promise<void>;
 
+export function AddSaveArchive(arg1:number,arg2:string,arg3:string,arg4:boolean,arg5:string,arg6:string):Promise<models.SaveArchive>;
+
 export function AddTag(arg1:models.Tag):Promise<models.Tag>;
+
+export function BackupSaveArchive(arg1:number,arg2:string,arg3:string):Promise<models.SaveBackup>;
 
 export function DeleteCategory(arg1:number):Promise<void>;
 
 export function DeleteGame(arg1:number):Promise<void>;
 
 export function DeleteReport(arg1:number):Promise<void>;
+
+export function DeleteSaveArchive(arg1:number,arg2:boolean):Promise<void>;
+
+export function DeleteSaveBackup(arg1:number,arg2:boolean):Promise<void>;
 
 export function DeleteTag(arg1:number):Promise<void>;
 
@@ -50,6 +58,10 @@ export function ListGames():Promise<Array<models.Game>>;
 
 export function ListReports():Promise<Array<models.Report>>;
 
+export function ListSaveArchives(arg1:number):Promise<Array<models.SaveArchive>>;
+
+export function ListSaveBackups(arg1:number):Promise<Array<models.SaveBackup>>;
+
 export function ListTags():Promise<Array<models.Tag>>;
 
 export function SaveAISettings(arg1:services.AIConfig):Promise<void>;
@@ -61,6 +73,12 @@ export function SaveReport(arg1:models.Report):Promise<models.Report>;
 export function ScanGamesInDirectory(arg1:string,arg2:number):Promise<Array<models.ScannedGame>>;
 
 export function SelectGameDirectory():Promise<string>;
+
+export function SelectSaveArchiveDirectory():Promise<string>;
+
+export function SelectSaveArchiveFile():Promise<string>;
+
+export function SelectSaveBackupDirectory(arg1:string):Promise<string>;
 
 export function StartMonitor():Promise<void>;
 

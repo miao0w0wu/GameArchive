@@ -23,7 +23,7 @@ const (
 	// AppVersion 应用版本号。
 	AppVersion = "0.1.0"
 	// StageName 当前实现阶段，展示在设置页以便区分尚未实现的功能。
-	StageName = "阶段 4：AI 报告 + 图片导出 + 报告导入导出"
+	StageName = "阶段 5：本地游戏存档与备份管理"
 )
 
 const (
@@ -324,6 +324,101 @@ func (a *App) GetMonitorStatus() (services.MonitorStatus, error) {
 		return services.MonitorStatus{}, err
 	}
 	return a.svc.Tracker.Status(), nil
+}
+
+// ------------------------------------------------------------- 本地存档与备份
+
+// SelectSaveArchiveFile 打开文件选择框，选择要登记的存档文件。
+func (a *App) SelectSaveArchiveFile() (string, error) {
+	if err := a.ready(); err != nil {
+		return "", err
+	}
+	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "选择存档文件",
+	})
+	if err != nil {
+		return "", fmt.Errorf("选择存档文件失败: %w", err)
+	}
+	return path, nil
+}
+
+// SelectSaveArchiveDirectory 打开目录选择框，选择要登记的存档文件夹。
+func (a *App) SelectSaveArchiveDirectory() (string, error) {
+	if err := a.ready(); err != nil {
+		return "", err
+	}
+	path, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "选择存档文件夹",
+	})
+	if err != nil {
+		return "", fmt.Errorf("选择存档文件夹失败: %w", err)
+	}
+	return path, nil
+}
+
+// SelectSaveBackupDirectory 打开目录选择框，选择备份目标文件夹。
+func (a *App) SelectSaveBackupDirectory(defaultDirectory string) (string, error) {
+	if err := a.ready(); err != nil {
+		return "", err
+	}
+	options := runtime.OpenDialogOptions{Title: "选择备份目标文件夹"}
+	if strings.TrimSpace(defaultDirectory) != "" {
+		options.DefaultDirectory = defaultDirectory
+	}
+	path, err := runtime.OpenDirectoryDialog(a.ctx, options)
+	if err != nil {
+		return "", fmt.Errorf("选择备份目标文件夹失败: %w", err)
+	}
+	return path, nil
+}
+
+// AddSaveArchive 将用户选择的文件或文件夹登记为某个游戏的存档。
+// 该操作只记录路径，不会移动、复制或删除原始存档。
+func (a *App) AddSaveArchive(gameID uint, name, sourcePath string, isDir bool, backupDir, note string) (*models.SaveArchive, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
+	return a.svc.Archive.AddArchive(gameID, name, sourcePath, isDir, backupDir, note)
+}
+
+// ListSaveArchives 返回指定游戏的全部存档记录。
+func (a *App) ListSaveArchives(gameID uint) ([]models.SaveArchive, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
+	return a.svc.Archive.ListArchives(gameID)
+}
+
+// BackupSaveArchive 将存档复制到指定目录并记录备份时间、路径与备注。
+func (a *App) BackupSaveArchive(archiveID uint, targetDir, note string) (*models.SaveBackup, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
+	return a.svc.Archive.BackupArchive(archiveID, targetDir, note)
+}
+
+// ListSaveBackups 返回指定存档的全部备份历史。
+func (a *App) ListSaveBackups(archiveID uint) ([]models.SaveBackup, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
+	return a.svc.Archive.ListBackups(archiveID)
+}
+
+// DeleteSaveArchive 删除存档记录；只有用户确认时才删除原始存档文件。
+func (a *App) DeleteSaveArchive(id uint, deleteOriginal bool) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.svc.Archive.DeleteArchive(id, deleteOriginal)
+}
+
+// DeleteSaveBackup 删除备份历史；只有用户确认时才删除对应备份文件。
+func (a *App) DeleteSaveBackup(id uint, deleteFile bool) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.svc.Archive.DeleteBackup(id, deleteFile)
 }
 
 // ------------------------------------------------------------- 统计与图表

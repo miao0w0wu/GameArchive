@@ -393,7 +393,7 @@ export default function GameLibrary() {
                         <>
                             确定要删除「{deleteTarget.name}」吗？
                             <br />
-                            只会移除档案记录（含标签关联），不会删除磁盘上的游戏文件。
+                            会移除游戏、存档与备份历史记录，但不会删除磁盘上的游戏文件、原始存档或备份文件。
                         </>
                     }
                     onCancel={() => setDeleteTarget(null)}

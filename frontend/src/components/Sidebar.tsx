@@ -84,7 +84,7 @@ export default function Sidebar() {
             <div className="border-t border-slate-800 px-5 py-4 text-xs text-slate-500">
                 <p>版本 {appInfo?.version ?? '0.1.0'}</p>
                 <p className="mt-1 leading-relaxed text-slate-600">
-                                                    阶段 4：AI 报告 / 图片导出
+                    阶段 5：游戏存档 / 备份管理
                 </p>
             </div>
         </aside>

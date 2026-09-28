@@ -9,7 +9,7 @@ const ROADMAP = [
     { stage: '阶段 2', text: '目录扫描、进程监控与时长统计', done: true },
     { stage: '阶段 3', text: 'ECharts 统计图表，按年 / 月 / 周分析游玩数据', done: true },
     { stage: '阶段 4', text: 'OpenAI 兼容接口生成 AI 报告、图片导出与报告导入导出', done: true },
-    { stage: '阶段 5', text: '本地游戏存档导入、备份与备份历史管理', done: false },
+    { stage: '阶段 5', text: '本地游戏存档导入、备份与备份历史管理', done: true },
 ]
 
 function InfoRow({ label, value, mono = false }: { label: string; value: ReactNode; mono?: boolean }) {
@@ -106,7 +106,7 @@ export default function SettingsPage() {
                 <dl className="mt-2">
                     <InfoRow label="应用名称" value={appInfo?.appName ?? '游戏档案'} />
                     <InfoRow label="版本" value={appInfo?.version ?? '0.1.0'} />
-                    <InfoRow label="当前阶段" value={appInfo?.stage ?? '阶段 4'} />
+                    <InfoRow label="当前阶段" value={appInfo?.stage ?? '阶段 5'} />
                     <InfoRow
                         label="数据库状态"
                         value={

@@ -14,8 +14,16 @@ export function AddGameDirectory(arg1) {
   return window['go']['main']['App']['AddGameDirectory'](arg1);
 }
 
+export function AddSaveArchive(arg1, arg2, arg3, arg4, arg5, arg6) {
+  return window['go']['main']['App']['AddSaveArchive'](arg1, arg2, arg3, arg4, arg5, arg6);
+}
+
 export function AddTag(arg1) {
   return window['go']['main']['App']['AddTag'](arg1);
+}
+
+export function BackupSaveArchive(arg1, arg2, arg3) {
+  return window['go']['main']['App']['BackupSaveArchive'](arg1, arg2, arg3);
 }
 
 export function DeleteCategory(arg1) {
@@ -28,6 +36,14 @@ export function DeleteGame(arg1) {
 
 export function DeleteReport(arg1) {
   return window['go']['main']['App']['DeleteReport'](arg1);
+}
+
+export function DeleteSaveArchive(arg1, arg2) {
+  return window['go']['main']['App']['DeleteSaveArchive'](arg1, arg2);
+}
+
+export function DeleteSaveBackup(arg1, arg2) {
+  return window['go']['main']['App']['DeleteSaveBackup'](arg1, arg2);
 }
 
 export function DeleteTag(arg1) {
@@ -94,6 +110,14 @@ export function ListReports() {
   return window['go']['main']['App']['ListReports']();
 }
 
+export function ListSaveArchives(arg1) {
+  return window['go']['main']['App']['ListSaveArchives'](arg1);
+}
+
+export function ListSaveBackups(arg1) {
+  return window['go']['main']['App']['ListSaveBackups'](arg1);
+}
+
 export function ListTags() {
   return window['go']['main']['App']['ListTags']();
 }
@@ -116,6 +140,18 @@ export function ScanGamesInDirectory(arg1, arg2) {
 
 export function SelectGameDirectory() {
   return window['go']['main']['App']['SelectGameDirectory']();
+}
+
+export function SelectSaveArchiveDirectory() {
+  return window['go']['main']['App']['SelectSaveArchiveDirectory']();
+}
+
+export function SelectSaveArchiveFile() {
+  return window['go']['main']['App']['SelectSaveArchiveFile']();
+}
+
+export function SelectSaveBackupDirectory(arg1) {
+  return window['go']['main']['App']['SelectSaveBackupDirectory'](arg1);
 }
 
 export function StartMonitor() {

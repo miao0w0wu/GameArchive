@@ -5,6 +5,7 @@ import { services } from '../../wailsjs/go/models'
 import { formatDateTime, formatDuration } from '../lib/format'
 import { extractError } from '../stores/appStore'
 import Modal from './Modal'
+import SaveArchivesPanel from './SaveArchivesPanel'
 
 interface GameDetailModalProps {
     gameId: number
@@ -46,7 +47,7 @@ export default function GameDetailModal({ gameId, onClose }: GameDetailModalProp
     }, [gameId])
 
     return (
-        <Modal title="游戏详情" onClose={onClose} widthClass="max-w-xl">
+        <Modal title="游戏详情" onClose={onClose} widthClass="max-w-3xl">
             {error ? (
                 <p className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
                     {error}
@@ -89,6 +90,7 @@ export default function GameDetailModal({ gameId, onClose }: GameDetailModalProp
                         <Field label="创建时间" value={formatDateTime(detail.createdAt)} />
                         <Field label="更新时间" value={formatDateTime(detail.updatedAt)} />
                     </dl>
+                    <SaveArchivesPanel gameId={detail.id} gameName={detail.name} />
                 </div>
             ) : null}
         </Modal>

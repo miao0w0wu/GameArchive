@@ -20,6 +20,7 @@ type Services struct {
 	Tracker  *Tracker
 	Stats    *StatsService
 	Report   *ReportService
+	Archive  *ArchiveService
 }
 
 // New 创建业务服务集合。
@@ -32,5 +33,6 @@ func New(db *gorm.DB) *Services {
 		Tracker:  NewTracker(db, nil, nil),
 		Stats:    &StatsService{db: db},
 		Report:   NewReportService(db),
+		Archive:  &ArchiveService{db: db},
 	}
 }
