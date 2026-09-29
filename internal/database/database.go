@@ -81,6 +81,12 @@ func migrate(db *gorm.DB) error {
 	if err != nil {
 		return fmt.Errorf("数据库迁移失败: %w", err)
 	}
+	if err := db.Exec("UPDATE games SET cover_source = 'manual' WHERE cover_path <> '' AND cover_source = 'none'").Error; err != nil {
+		return fmt.Errorf("迁移既有游戏封面来源失败: %w", err)
+	}
+	if err := db.Exec("UPDATE games SET icon_source = 'manual' WHERE icon_path <> '' AND icon_source = 'none'").Error; err != nil {
+		return fmt.Errorf("迁移既有游戏图标来源失败: %w", err)
+	}
 	return nil
 }
 

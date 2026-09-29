@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -81,6 +82,11 @@ func (s *GameService) Add(game models.Game) (*models.Game, error) {
 	}
 
 	tagIDs := collectTagIDs(game.Tags)
+	if game.CoverPath != "" {
+		now := time.Now()
+		game.CoverSource = "manual"
+		game.CoverUpdatedAt = &now
+	}
 	game.ID = 0
 	game.Tags = nil
 
@@ -103,7 +109,8 @@ func (s *GameService) Update(game models.Game) (*models.Game, error) {
 	if err := normalizeAndValidate(&game, false); err != nil {
 		return nil, err
 	}
-	if _, err := s.Get(game.ID); err != nil {
+	current, err := s.Get(game.ID)
+	if err != nil {
 		return nil, err
 	}
 	if err := s.ensureCategoryExists(game.CategoryID); err != nil {
@@ -119,8 +126,22 @@ func (s *GameService) Update(game models.Game) (*models.Game, error) {
 		"cover_path":   game.CoverPath,
 		"category_id":  game.CategoryID,
 	}
+	if game.CoverPath != current.CoverPath {
+		if game.CoverPath == "" {
+			fields["cover_source"] = "none"
+			fields["cover_updated_at"] = nil
+		} else {
+			fields["cover_source"] = "manual"
+			fields["cover_updated_at"] = time.Now()
+		}
+	}
 	if err := s.db.Model(&models.Game{}).Where("id = ?", game.ID).Updates(fields).Error; err != nil {
 		return nil, fmt.Errorf("更新游戏失败: %w", err)
+	}
+	if game.CoverPath == "" && game.CoverPath != current.CoverPath {
+		if err := s.db.Exec("UPDATE games SET cover_updated_at = NULL WHERE id = ?", game.ID).Error; err != nil {
+			return nil, fmt.Errorf("清除游戏封面更新时间失败: %w", err)
+		}
 	}
 	if err := s.replaceTags(game.ID, collectTagIDs(game.Tags)); err != nil {
 		return nil, err

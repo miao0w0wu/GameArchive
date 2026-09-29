@@ -59,7 +59,7 @@ func (a *App) startup(ctx context.Context) {
 
 	a.db = db
 	a.paths = paths
-	a.svc = services.New(db)
+	a.svc = services.New(db, paths.DataDir)
 	a.svc.Tracker.SetErrorHandler(func(err error) {
 		runtime.LogErrorf(ctx, "进程监控失败: %v", err)
 	})
@@ -456,8 +456,151 @@ func (a *App) SyncSteamLibrary() (services.SteamSyncResult, error) {
 	if err != nil {
 		return services.SteamSyncResult{}, err
 	}
+	games, listErr := a.svc.Game.List()
+	if listErr != nil {
+		runtime.LogWarningf(a.ctx, "查询 Steam 游戏图片任务失败: %v", listErr)
+	} else {
+		missingCovers := make([]uint, 0)
+		missingIcons := make([]uint, 0)
+		for _, game := range games {
+			if game.SteamAppID == 0 {
+				continue
+			}
+			if game.CoverPath == "" {
+				missingCovers = append(missingCovers, game.ID)
+			}
+			if game.IconPath == "" {
+				missingIcons = append(missingIcons, game.ID)
+			}
+		}
+		for start := 0; start < len(missingCovers); start += 100 {
+			end := min(start+100, len(missingCovers))
+			if _, coverErr := a.svc.Cover.BatchFetchMissing(missingCovers[start:end], "cover"); coverErr != nil {
+				runtime.LogWarningf(a.ctx, "自动获取 Steam 游戏封面失败: %v", coverErr)
+			}
+		}
+		for start := 0; start < len(missingIcons); start += 100 {
+			end := min(start+100, len(missingIcons))
+			if _, coverErr := a.svc.Cover.BatchFetchMissing(missingIcons[start:end], "icon"); coverErr != nil {
+				runtime.LogWarningf(a.ctx, "自动获取 Steam 游戏图标失败: %v", coverErr)
+			}
+		}
+	}
 	runtime.EventsEmit(a.ctx, "tracker:update", a.svc.Tracker.Status())
 	return result, nil
+}
+
+// ------------------------------------------------------------- 游戏封面与展示
+
+// SelectAndSetCover 选择图片并将其复制到应用本地缓存，target 为 cover 或 icon。
+func (a *App) SelectAndSetCover(gameID uint, target string) (string, error) {
+	if err := a.ready(); err != nil {
+		return "", err
+	}
+	if target != "cover" && target != "icon" {
+		return "", errors.New("图片类型必须为 cover 或 icon")
+	}
+	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "选择游戏" + map[string]string{"cover": "封面", "icon": "图标"}[target],
+		Filters: []runtime.FileFilter{
+			{DisplayName: "图片文件 (*.png;*.jpg;*.jpeg;*.gif;*.ico)", Pattern: "*.png;*.jpg;*.jpeg;*.gif;*.ico"},
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("选择游戏图片失败: %w", err)
+	}
+	if strings.TrimSpace(path) == "" {
+		return "", nil
+	}
+	return a.svc.Cover.SetImage(gameID, target, path)
+}
+
+// ClearCover 清除图片字段，之后可点击自动获取来恢复图片。
+func (a *App) ClearCover(gameID uint, target string) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.svc.Cover.ClearImage(gameID, target)
+}
+
+// AutoFetchCover 手动触发封面自动获取，允许用户显式替换已有图片。
+func (a *App) AutoFetchCover(gameID uint) (services.CoverResult, error) {
+	if err := a.ready(); err != nil {
+		return services.CoverResult{}, err
+	}
+	return a.svc.Cover.AutoFetch(gameID, "cover", true)
+}
+
+// AutoFetchIcon 手动触发图标自动获取。
+func (a *App) AutoFetchIcon(gameID uint) (services.CoverResult, error) {
+	if err := a.ready(); err != nil {
+		return services.CoverResult{}, err
+	}
+	return a.svc.Cover.AutoFetch(gameID, "icon", true)
+}
+
+// BatchFetchCovers 批量自动获取封面，单次最多支持 100 个游戏。
+func (a *App) BatchFetchCovers(gameIDs []uint) (services.BatchCoverResult, error) {
+	if err := a.ready(); err != nil {
+		return services.BatchCoverResult{}, err
+	}
+	return a.svc.Cover.BatchFetch(gameIDs, "cover")
+}
+
+// BatchFetchIcons 批量自动获取图标，单次最多支持 100 个游戏。
+func (a *App) BatchFetchIcons(gameIDs []uint) (services.BatchCoverResult, error) {
+	if err := a.ready(); err != nil {
+		return services.BatchCoverResult{}, err
+	}
+	return a.svc.Cover.BatchFetch(gameIDs, "icon")
+}
+
+// GetGameCoverInfo 返回封面 / 图标来源、更新时间和缓存位置。
+func (a *App) GetGameCoverInfo(gameID uint) (services.GameCoverInfo, error) {
+	if err := a.ready(); err != nil {
+		return services.GameCoverInfo{}, err
+	}
+	return a.svc.Cover.GetInfo(gameID)
+}
+
+// GetGameImageData 返回游戏图片的本地 data URL，所有文件读取均在 Go 侧完成。
+func (a *App) GetGameImageData(gameID uint, target string) (string, error) {
+	if err := a.ready(); err != nil {
+		return "", err
+	}
+	return a.svc.Cover.GetImageData(gameID, target)
+}
+
+// GetCoverSettings 返回在线封面搜索配置和缓存目录。
+func (a *App) GetCoverSettings() (services.CoverSettings, error) {
+	if err := a.ready(); err != nil {
+		return services.CoverSettings{}, err
+	}
+	return a.svc.Cover.GetSettings()
+}
+
+// SaveCoverSettings 保存在线封面搜索配置。
+func (a *App) SaveCoverSettings(settings services.CoverSettings) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.svc.Cover.SaveSettings(settings)
+}
+
+// GetLibraryDisplaySettings 返回游戏库展示偏好。
+func (a *App) GetLibraryDisplaySettings() (services.LibraryDisplaySettings, error) {
+	if err := a.ready(); err != nil {
+		return services.LibraryDisplaySettings{}, err
+	}
+	return a.svc.Cover.GetLibraryDisplaySettings()
+}
+
+// SaveLibraryDisplaySettings 保存游戏库展示偏好。
+func (a *App) SaveLibraryDisplaySettings(settings services.LibraryDisplaySettings) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.svc.Cover.SaveLibraryDisplaySettings(settings)
 }
 
 // ------------------------------------------------------------- 统计与图表

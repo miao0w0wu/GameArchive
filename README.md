@@ -72,6 +72,16 @@
 - Steam 累计时长单独存于 `steam_playtime_seconds`，不覆盖进程监控的 `total_seconds`。游戏库区分展示两种时长；仪表盘累计、Top 游戏与分类占比按两种来源的较大值计算，避免重复统计。
 - 设置页展示最近一次同步结果或错误；凭据、最近结果与同步错误保存在本机 `settings` 表。
 
+### 游戏封面与展示模式
+
+- 游戏库支持列表 / 卡片模式，模式、卡片列数和封面尺寸写入 `settings` 表。
+- 游戏表分别保存 `cover_path` / `icon_path`、来源标记和更新时间；旧数据库通过 GORM 自动迁移。
+- 列表优先展示图标，缺失时回退封面；卡片优先展示竖版封面，缺失时回退图标。图片由 Go 读取并转换为本地 data URL 提供给界面。
+- 上传图片会复制到用户配置目录下的 `covers/` 或 `icons/` 缓存；支持清除、单个或批量自动获取。
+- 自动来源顺序：安装目录的常见图片文件、Steam 商店 / CDN、（可选）SteamGridDB、（可选）RAWG。Steam 同步后会为缺图游戏尝试补充封面和图标。
+- 自动获取不覆盖已有图片；用户主动触发单个或批量自动获取时可替换。下载失败使用占位图，不影响游戏库其它操作。
+- 设置页可关闭在线搜索并保存 SteamGridDB / RAWG API Key；密钥保存在本地设置表。
+
 ## 目录结构
 
 ```
@@ -105,7 +115,7 @@
       ├─ main.tsx / style.css  # 入口与全局样式（Tailwind）
       ├─ lib/                  # 格式化、图表、Markdown 清理与图片导出辅助
       ├─ stores/appStore.ts    # Zustand 状态与所有 Wails 调用
-      ├─ components/           # Sidebar、Modal、游戏表单 / 详情、AI / Steam 设置等
+      ├─ components/           # Sidebar、Modal、游戏表单 / 详情、AI / Steam / 封面设置等
       ├─ pages/                # Dashboard、GameLibrary、StatsPage、CategoriesPage、SettingsPage
       └─ wailsjs/              # Wails 自动生成的绑定（勿手动修改）
 ```
@@ -133,6 +143,7 @@
 | `save_backups` | 每次备份路径、时间与备注 | 读写 |
 
 `total_seconds` 与 `last_played_at` 由阶段 2 的进程监控维护，前端新增游戏时会被强制初始化为 0 / NULL。Steam 的 AppID、游玩秒数和最近同步时间分别保存在 `steam_app_id`、`steam_playtime_seconds` 和 `steam_last_synced_at`；两类时长独立维护。
+封面和图标分别使用 `cover_path` / `icon_path`、`cover_source` / `icon_source` 和各自更新时间；游戏库展示模式及图片服务配置存于 `settings`。
 
 ## 前端可调用的后端方法
 
@@ -161,6 +172,13 @@ ImportReportFromFile() / ExportReportMarkdown(id) / SaveImage(base64PNG, filenam
 
 GetSteamSettings() / SaveSteamSettings(config)
 GetSteamSyncStatus() / SyncSteamLibrary()
+
+SelectAndSetCover(gameID, "cover" | "icon") / ClearCover(gameID, target)
+AutoFetchCover(gameID) / AutoFetchIcon(gameID)
+BatchFetchCovers(gameIDs) / BatchFetchIcons(gameIDs)
+GetGameCoverInfo(gameID) / GetGameImageData(gameID, target)
+GetCoverSettings() / SaveCoverSettings(config)
+GetLibraryDisplaySettings() / SaveLibraryDisplaySettings(settings)
 
 SelectSaveArchiveFile() / SelectSaveArchiveDirectory() / SelectSaveBackupDirectory(defaultDir)
 AddSaveArchive(gameID, name, sourcePath, isDir, backupDir, note)

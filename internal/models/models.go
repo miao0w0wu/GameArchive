@@ -10,13 +10,17 @@ type Game struct {
 	// ExePath 可执行文件绝对路径，进程监控优先用它匹配（阶段 2）。
 	ExePath string `gorm:"size:1024" json:"exePath"`
 	// ProcessName 进程名（含或不含 .exe），作为 exe 路径匹配失败时的兜底。
-	ProcessName string `gorm:"size:255;index" json:"processName"`
-	InstallDir  string `gorm:"size:1024" json:"installDir"`
-	// CoverPath 封面图片的本地路径，阶段 1 仅存储与编辑，不做渲染。
-	CoverPath  string    `gorm:"size:1024" json:"coverPath"`
-	CategoryID *uint     `gorm:"index" json:"categoryId"`
-	Category   *Category `gorm:"foreignKey:CategoryID;constraint:OnDelete:SET NULL" json:"category"`
-	Tags       []Tag     `gorm:"many2many:game_tags;" json:"tags"`
+	ProcessName    string     `gorm:"size:255;index" json:"processName"`
+	InstallDir     string     `gorm:"size:1024" json:"installDir"`
+	CoverPath      string     `gorm:"size:1024" json:"coverPath"`
+	IconPath       string     `gorm:"size:1024" json:"iconPath"`
+	CoverSource    string     `gorm:"size:32;not null;default:none" json:"coverSource"`
+	IconSource     string     `gorm:"size:32;not null;default:none" json:"iconSource"`
+	CoverUpdatedAt *time.Time `gorm:"autoUpdateTime:false" json:"coverUpdatedAt"`
+	IconUpdatedAt  *time.Time `gorm:"autoUpdateTime:false" json:"iconUpdatedAt"`
+	CategoryID     *uint      `gorm:"index" json:"categoryId"`
+	Category       *Category  `gorm:"foreignKey:CategoryID;constraint:OnDelete:SET NULL" json:"category"`
+	Tags           []Tag      `gorm:"many2many:game_tags;" json:"tags"`
 	// TotalSeconds 累计游玩秒数，由阶段 2 的进程监控累加。
 	TotalSeconds int64  `gorm:"not null;default:0" json:"totalSeconds"`
 	SteamAppID   uint64 `gorm:"index" json:"steamAppId"`

@@ -14,7 +14,17 @@ export function AddSaveArchive(arg1:number,arg2:string,arg3:string,arg4:boolean,
 
 export function AddTag(arg1:models.Tag):Promise<models.Tag>;
 
+export function AutoFetchCover(arg1:number):Promise<services.CoverResult>;
+
+export function AutoFetchIcon(arg1:number):Promise<services.CoverResult>;
+
 export function BackupSaveArchive(arg1:number,arg2:string,arg3:string):Promise<models.SaveBackup>;
+
+export function BatchFetchCovers(arg1:Array<number>):Promise<services.BatchCoverResult>;
+
+export function BatchFetchIcons(arg1:Array<number>):Promise<services.BatchCoverResult>;
+
+export function ClearCover(arg1:number,arg2:string):Promise<void>;
 
 export function DeleteCategory(arg1:number):Promise<void>;
 
@@ -36,11 +46,19 @@ export function GetAISettings():Promise<services.AIConfig>;
 
 export function GetAppInfo():Promise<main.AppInfo>;
 
+export function GetCoverSettings():Promise<services.CoverSettings>;
+
 export function GetDashboardStats():Promise<services.StatsOverview>;
+
+export function GetGameCoverInfo(arg1:number):Promise<services.GameCoverInfo>;
 
 export function GetGameDetail(arg1:number):Promise<services.GameDetail>;
 
 export function GetGameDirectory():Promise<string>;
+
+export function GetGameImageData(arg1:number,arg2:string):Promise<string>;
+
+export function GetLibraryDisplaySettings():Promise<services.LibraryDisplaySettings>;
 
 export function GetMonitorStatus():Promise<services.MonitorStatus>;
 
@@ -70,13 +88,19 @@ export function ListTags():Promise<Array<models.Tag>>;
 
 export function SaveAISettings(arg1:services.AIConfig):Promise<void>;
 
+export function SaveCoverSettings(arg1:services.CoverSettings):Promise<void>;
+
 export function SaveImage(arg1:string,arg2:string):Promise<string>;
+
+export function SaveLibraryDisplaySettings(arg1:services.LibraryDisplaySettings):Promise<void>;
 
 export function SaveReport(arg1:models.Report):Promise<models.Report>;
 
 export function SaveSteamSettings(arg1:services.SteamConfig):Promise<void>;
 
 export function ScanGamesInDirectory(arg1:string,arg2:number):Promise<Array<models.ScannedGame>>;
+
+export function SelectAndSetCover(arg1:number,arg2:string):Promise<string>;
 
 export function SelectGameDirectory():Promise<string>;
 

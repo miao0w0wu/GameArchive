@@ -172,7 +172,7 @@ export default function GameFormModal({ game, onClose }: GameFormModalProps) {
                         placeholder="C:\Pictures\stardew.png"
                     />
                     <p className="mt-1 text-xs text-slate-500">
-                        阶段 1 只保存路径，暂不在界面中渲染封面图片。
+                        可填写已有图片路径；也可在游戏详情中上传图片或使用自动获取。
                     </p>
                 </div>
 

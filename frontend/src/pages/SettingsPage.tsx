@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 import AISettingsCard from '../components/AISettingsCard'
+import CoverSettingsCard from '../components/CoverSettingsCard'
 import SteamSettingsCard from '../components/SteamSettingsCard'
 import { btnGhost, cardClass } from '../lib/ui'
 import { useAppStore } from '../stores/appStore'
@@ -103,6 +104,7 @@ export default function SettingsPage() {
 
             <AISettingsCard />
             <SteamSettingsCard />
+            <CoverSettingsCard />
 
             <section className={`${cardClass} mt-5 p-5`}>
                 <h2 className="text-sm font-semibold text-slate-200">运行环境</h2>

@@ -22,8 +22,28 @@ export function AddTag(arg1) {
   return window['go']['main']['App']['AddTag'](arg1);
 }
 
+export function AutoFetchCover(arg1) {
+  return window['go']['main']['App']['AutoFetchCover'](arg1);
+}
+
+export function AutoFetchIcon(arg1) {
+  return window['go']['main']['App']['AutoFetchIcon'](arg1);
+}
+
 export function BackupSaveArchive(arg1, arg2, arg3) {
   return window['go']['main']['App']['BackupSaveArchive'](arg1, arg2, arg3);
+}
+
+export function BatchFetchCovers(arg1) {
+  return window['go']['main']['App']['BatchFetchCovers'](arg1);
+}
+
+export function BatchFetchIcons(arg1) {
+  return window['go']['main']['App']['BatchFetchIcons'](arg1);
+}
+
+export function ClearCover(arg1, arg2) {
+  return window['go']['main']['App']['ClearCover'](arg1, arg2);
 }
 
 export function DeleteCategory(arg1) {
@@ -66,8 +86,16 @@ export function GetAppInfo() {
   return window['go']['main']['App']['GetAppInfo']();
 }
 
+export function GetCoverSettings() {
+  return window['go']['main']['App']['GetCoverSettings']();
+}
+
 export function GetDashboardStats() {
   return window['go']['main']['App']['GetDashboardStats']();
+}
+
+export function GetGameCoverInfo(arg1) {
+  return window['go']['main']['App']['GetGameCoverInfo'](arg1);
 }
 
 export function GetGameDetail(arg1) {
@@ -76,6 +104,14 @@ export function GetGameDetail(arg1) {
 
 export function GetGameDirectory() {
   return window['go']['main']['App']['GetGameDirectory']();
+}
+
+export function GetGameImageData(arg1, arg2) {
+  return window['go']['main']['App']['GetGameImageData'](arg1, arg2);
+}
+
+export function GetLibraryDisplaySettings() {
+  return window['go']['main']['App']['GetLibraryDisplaySettings']();
 }
 
 export function GetMonitorStatus() {
@@ -134,8 +170,16 @@ export function SaveAISettings(arg1) {
   return window['go']['main']['App']['SaveAISettings'](arg1);
 }
 
+export function SaveCoverSettings(arg1) {
+  return window['go']['main']['App']['SaveCoverSettings'](arg1);
+}
+
 export function SaveImage(arg1, arg2) {
   return window['go']['main']['App']['SaveImage'](arg1, arg2);
+}
+
+export function SaveLibraryDisplaySettings(arg1) {
+  return window['go']['main']['App']['SaveLibraryDisplaySettings'](arg1);
 }
 
 export function SaveReport(arg1) {
@@ -148,6 +192,10 @@ export function SaveSteamSettings(arg1) {
 
 export function ScanGamesInDirectory(arg1, arg2) {
   return window['go']['main']['App']['ScanGamesInDirectory'](arg1, arg2);
+}
+
+export function SelectAndSetCover(arg1, arg2) {
+  return window['go']['main']['App']['SelectAndSetCover'](arg1, arg2);
 }
 
 export function SelectGameDirectory() {

@@ -1,9 +1,17 @@
 import { useEffect, useState } from 'react'
 
-import { GetGameDetail } from '../../wailsjs/go/main/App'
+import {
+    AutoFetchCover,
+    AutoFetchIcon,
+    ClearCover,
+    GetGameDetail,
+    SelectAndSetCover,
+} from '../../wailsjs/go/main/App'
 import { services } from '../../wailsjs/go/models'
+import GameImage from './GameImage'
+import { btnGhost } from '../lib/ui'
 import { formatDateTime, formatDuration } from '../lib/format'
-import { extractError } from '../stores/appStore'
+import { extractError, useAppStore } from '../stores/appStore'
 import Modal from './Modal'
 import SaveArchivesPanel from './SaveArchivesPanel'
 
@@ -25,26 +33,62 @@ function Field({ label, value }: { label: string; value: string }) {
 export default function GameDetailModal({ gameId, onClose }: GameDetailModalProps) {
     const [detail, setDetail] = useState<services.GameDetail | null>(null)
     const [error, setError] = useState('')
+    const [busyTarget, setBusyTarget] = useState<'cover' | 'icon' | ''>('')
+    const refreshAll = useAppStore((state) => state.refreshAll)
+    const notify = useAppStore((state) => state.notify)
+
+    const loadDetail = () =>
+        GetGameDetail(gameId)
+            .then((result) => {
+                setDetail(result)
+                setError('')
+            })
+            .catch((err: unknown) => {
+                setError(extractError(err))
+            })
 
     useEffect(() => {
         let cancelled = false
-
         GetGameDetail(gameId)
             .then((result) => {
-                if (!cancelled) {
-                    setDetail(result)
-                }
+                if (!cancelled) setDetail(result)
             })
             .catch((err: unknown) => {
-                if (!cancelled) {
-                    setError(extractError(err))
-                }
+                if (!cancelled) setError(extractError(err))
             })
-
         return () => {
             cancelled = true
         }
     }, [gameId])
+
+    const runImageAction = async (target: 'cover' | 'icon', action: 'select' | 'auto' | 'clear') => {
+        setBusyTarget(target)
+        setError('')
+        try {
+            if (action === 'select') {
+                const path = await SelectAndSetCover(gameId, target)
+                if (!path) return
+            } else if (action === 'auto') {
+                const fetched = target === 'cover' ? await AutoFetchCover(gameId) : await AutoFetchIcon(gameId)
+                if (!fetched.found) {
+                    notify('info', fetched.reason || '未找到匹配图片')
+                    return
+                }
+                notify('success', `已更新${target === 'cover' ? '封面' : '图标'}（${fetched.source}）`)
+            } else {
+                await ClearCover(gameId, target)
+                notify('info', `已清除${target === 'cover' ? '封面' : '图标'}，将显示默认图片`)
+            }
+            await loadDetail()
+            await refreshAll()
+        } catch (reason) {
+            const message = extractError(reason)
+            setError(message)
+            notify('error', `更新${target === 'cover' ? '封面' : '图标'}失败：${message}`)
+        } finally {
+            setBusyTarget('')
+        }
+    }
 
     return (
         <Modal title="游戏详情" onClose={onClose} widthClass="max-w-3xl">
@@ -60,6 +104,46 @@ export default function GameDetailModal({ gameId, onClose }: GameDetailModalProp
 
             {detail ? (
                 <div>
+                    <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_12rem]">
+                        <div>
+                            <p className="mb-2 text-xs text-slate-500">游戏封面</p>
+                            <GameImage
+                                gameId={detail.id}
+                                name={detail.name}
+                                target="cover"
+                                imageVersion={`${detail.coverUpdatedAt ?? ''}${detail.iconUpdatedAt ?? ''}`}
+                                className="aspect-[2/3] max-h-80 w-full rounded-xl object-cover"
+                            />
+                            <div className="mt-2 flex flex-wrap gap-2">
+                                <button type="button" className={btnGhost} disabled={busyTarget !== ''} onClick={() => void runImageAction('cover', 'select')}>上传封面</button>
+                                <button type="button" className={btnGhost} disabled={busyTarget !== ''} onClick={() => void runImageAction('cover', 'auto')}>自动获取</button>
+                                <button type="button" className={btnGhost} disabled={busyTarget !== ''} onClick={() => void runImageAction('cover', 'clear')}>恢复默认</button>
+                            </div>
+                            <p className="mt-2 text-xs text-slate-500">
+                                来源：{detail.coverSource || 'none'}
+                                {detail.coverUpdatedAt ? ` · 更新于 ${formatDateTime(detail.coverUpdatedAt)}` : ''}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="mb-2 text-xs text-slate-500">游戏图标</p>
+                            <GameImage
+                                gameId={detail.id}
+                                name={detail.name}
+                                target="icon"
+                                imageVersion={`${detail.coverUpdatedAt ?? ''}${detail.iconUpdatedAt ?? ''}`}
+                                className="mx-auto aspect-square w-36 rounded-xl object-cover"
+                            />
+                            <div className="mt-2 flex flex-wrap justify-center gap-2">
+                                <button type="button" className={btnGhost} disabled={busyTarget !== ''} onClick={() => void runImageAction('icon', 'select')}>上传图标</button>
+                                <button type="button" className={btnGhost} disabled={busyTarget !== ''} onClick={() => void runImageAction('icon', 'auto')}>自动获取</button>
+                                <button type="button" className={btnGhost} disabled={busyTarget !== ''} onClick={() => void runImageAction('icon', 'clear')}>恢复默认</button>
+                            </div>
+                            <p className="mt-2 text-center text-xs text-slate-500">
+                                来源：{detail.iconSource || 'none'}
+                                {detail.iconUpdatedAt ? ` · 更新于 ${formatDateTime(detail.iconUpdatedAt)}` : ''}
+                            </p>
+                        </div>
+                    </div>
                     <div className="mb-4 flex items-start justify-between gap-4">
                         <div>
                             <h3 className="text-lg font-semibold text-slate-100">{detail.name}</h3>

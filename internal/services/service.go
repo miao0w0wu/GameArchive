@@ -22,10 +22,11 @@ type Services struct {
 	Report   *ReportService
 	Archive  *ArchiveService
 	Steam    *SteamService
+	Cover    *CoverService
 }
 
 // New 创建业务服务集合。
-func New(db *gorm.DB) *Services {
+func New(db *gorm.DB, dataDir string) *Services {
 	return &Services{
 		Game:     &GameService{db: db},
 		Category: &CategoryService{db: db},
@@ -36,5 +37,6 @@ func New(db *gorm.DB) *Services {
 		Report:   NewReportService(db),
 		Archive:  &ArchiveService{db: db},
 		Steam:    NewSteamService(db),
+		Cover:    NewCoverService(db, dataDir),
 	}
 }

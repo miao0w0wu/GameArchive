@@ -124,6 +124,13 @@ export namespace models {
 	    processName: string;
 	    installDir: string;
 	    coverPath: string;
+	    iconPath: string;
+	    coverSource: string;
+	    iconSource: string;
+	    // Go type: time
+	    coverUpdatedAt?: any;
+	    // Go type: time
+	    iconUpdatedAt?: any;
 	    categoryId?: number;
 	    category?: Category;
 	    tags: Tag[];
@@ -151,6 +158,11 @@ export namespace models {
 	        this.processName = source["processName"];
 	        this.installDir = source["installDir"];
 	        this.coverPath = source["coverPath"];
+	        this.iconPath = source["iconPath"];
+	        this.coverSource = source["coverSource"];
+	        this.iconSource = source["iconSource"];
+	        this.coverUpdatedAt = this.convertValues(source["coverUpdatedAt"], null);
+	        this.iconUpdatedAt = this.convertValues(source["iconUpdatedAt"], null);
 	        this.categoryId = source["categoryId"];
 	        this.category = this.convertValues(source["category"], Category);
 	        this.tags = this.convertValues(source["tags"], Tag);
@@ -421,6 +433,66 @@ export namespace services {
 		    return a;
 		}
 	}
+	export class CoverResult {
+	    gameId: number;
+	    target: string;
+	    path: string;
+	    source: string;
+	    found: boolean;
+	    reason: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CoverResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.gameId = source["gameId"];
+	        this.target = source["target"];
+	        this.path = source["path"];
+	        this.source = source["source"];
+	        this.found = source["found"];
+	        this.reason = source["reason"];
+	    }
+	}
+	export class BatchCoverResult {
+	    requested: number;
+	    fetched: number;
+	    skipped: number;
+	    failed: number;
+	    results: CoverResult[];
+	
+	    static createFrom(source: any = {}) {
+	        return new BatchCoverResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.requested = source["requested"];
+	        this.fetched = source["fetched"];
+	        this.skipped = source["skipped"];
+	        this.failed = source["failed"];
+	        this.results = this.convertValues(source["results"], CoverResult);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class BreakdownItem {
 	    name: string;
 	    color: string;
@@ -441,6 +513,73 @@ export namespace services {
 	        this.gameCount = source["gameCount"];
 	    }
 	}
+	
+	export class CoverSettings {
+	    onlineEnabled: boolean;
+	    steamGridDBKey: string;
+	    rawgKey: string;
+	    iconCacheDir: string;
+	    cacheDir: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CoverSettings(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.onlineEnabled = source["onlineEnabled"];
+	        this.steamGridDBKey = source["steamGridDBKey"];
+	        this.rawgKey = source["rawgKey"];
+	        this.iconCacheDir = source["iconCacheDir"];
+	        this.cacheDir = source["cacheDir"];
+	    }
+	}
+	export class GameCoverInfo {
+	    gameId: number;
+	    coverPath: string;
+	    iconPath: string;
+	    coverSource: string;
+	    iconSource: string;
+	    // Go type: time
+	    coverUpdatedAt?: any;
+	    // Go type: time
+	    iconUpdatedAt?: any;
+	    cacheDir: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new GameCoverInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.gameId = source["gameId"];
+	        this.coverPath = source["coverPath"];
+	        this.iconPath = source["iconPath"];
+	        this.coverSource = source["coverSource"];
+	        this.iconSource = source["iconSource"];
+	        this.coverUpdatedAt = this.convertValues(source["coverUpdatedAt"], null);
+	        this.iconUpdatedAt = this.convertValues(source["iconUpdatedAt"], null);
+	        this.cacheDir = source["cacheDir"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class GameDetail {
 	    id: number;
 	    name: string;
@@ -448,6 +587,13 @@ export namespace services {
 	    processName: string;
 	    installDir: string;
 	    coverPath: string;
+	    iconPath: string;
+	    coverSource: string;
+	    iconSource: string;
+	    // Go type: time
+	    coverUpdatedAt?: any;
+	    // Go type: time
+	    iconUpdatedAt?: any;
 	    categoryId?: number;
 	    category?: models.Category;
 	    tags: models.Tag[];
@@ -477,6 +623,11 @@ export namespace services {
 	        this.processName = source["processName"];
 	        this.installDir = source["installDir"];
 	        this.coverPath = source["coverPath"];
+	        this.iconPath = source["iconPath"];
+	        this.coverSource = source["coverSource"];
+	        this.iconSource = source["iconSource"];
+	        this.coverUpdatedAt = this.convertValues(source["coverUpdatedAt"], null);
+	        this.iconUpdatedAt = this.convertValues(source["iconUpdatedAt"], null);
 	        this.categoryId = source["categoryId"];
 	        this.category = this.convertValues(source["category"], models.Category);
 	        this.tags = this.convertValues(source["tags"], models.Tag);
@@ -564,6 +715,22 @@ export namespace services {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.imported = source["imported"];
 	        this.skipped = source["skipped"];
+	    }
+	}
+	export class LibraryDisplaySettings {
+	    viewMode: string;
+	    columns: number;
+	    cardSize: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new LibraryDisplaySettings(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.viewMode = source["viewMode"];
+	        this.columns = source["columns"];
+	        this.cardSize = source["cardSize"];
 	    }
 	}
 	export class MonitorStatus {
