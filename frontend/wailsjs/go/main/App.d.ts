@@ -22,6 +22,8 @@ export function BackupSaveArchive(arg1:number,arg2:string,arg3:string):Promise<m
 
 export function BatchFetchCovers(arg1:Array<number>):Promise<services.BatchCoverResult>;
 
+export function BatchFetchGameGenres(arg1:Array<number>):Promise<services.BatchGenreResult>;
+
 export function BatchFetchIcons(arg1:Array<number>):Promise<services.BatchCoverResult>;
 
 export function ClearCover(arg1:number,arg2:string):Promise<void>;
@@ -40,6 +42,8 @@ export function DeleteTag(arg1:number):Promise<void>;
 
 export function ExportReportMarkdown(arg1:number):Promise<string>;
 
+export function FetchGameGenres(arg1:number):Promise<Array<models.Genre>>;
+
 export function GenerateAIReport(arg1:services.AIReportRequest):Promise<models.Report>;
 
 export function GetAISettings():Promise<services.AIConfig>;
@@ -55,6 +59,8 @@ export function GetGameCoverInfo(arg1:number):Promise<services.GameCoverInfo>;
 export function GetGameDetail(arg1:number):Promise<services.GameDetail>;
 
 export function GetGameDirectory():Promise<string>;
+
+export function GetGameGenres(arg1:number):Promise<Array<models.Genre>>;
 
 export function GetGameImageData(arg1:number,arg2:string):Promise<string>;
 

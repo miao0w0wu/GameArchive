@@ -71,6 +71,8 @@ func migrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
 		&models.Category{},
 		&models.Tag{},
+		&models.Genre{},
+		&models.GameGenre{},
 		&models.Game{}, // 同时会创建多对多关联表 game_tags
 		&models.PlaySession{},
 		&models.Setting{},

@@ -23,6 +23,7 @@ type Services struct {
 	Archive  *ArchiveService
 	Steam    *SteamService
 	Cover    *CoverService
+	Genre    *GenreService
 }
 
 // New 创建业务服务集合。
@@ -38,5 +39,6 @@ func New(db *gorm.DB, dataDir string) *Services {
 		Archive:  &ArchiveService{db: db},
 		Steam:    NewSteamService(db),
 		Cover:    NewCoverService(db, dataDir),
+		Genre:    NewGenreService(db),
 	}
 }

@@ -3,10 +3,13 @@ import { useEffect, useState } from 'react'
 import {
     AutoFetchCover,
     AutoFetchIcon,
+    FetchGameGenres,
     ClearCover,
     GetGameDetail,
+    GetGameGenres,
     SelectAndSetCover,
 } from '../../wailsjs/go/main/App'
+import type { models } from '../../wailsjs/go/models'
 import { services } from '../../wailsjs/go/models'
 import GameImage from './GameImage'
 import { btnGhost } from '../lib/ui'
@@ -34,6 +37,8 @@ export default function GameDetailModal({ gameId, onClose }: GameDetailModalProp
     const [detail, setDetail] = useState<services.GameDetail | null>(null)
     const [error, setError] = useState('')
     const [busyTarget, setBusyTarget] = useState<'cover' | 'icon' | ''>('')
+    const [genres, setGenres] = useState<models.Genre[]>([])
+    const [genresBusy, setGenresBusy] = useState(false)
     const refreshAll = useAppStore((state) => state.refreshAll)
     const notify = useAppStore((state) => state.notify)
 
@@ -49,9 +54,12 @@ export default function GameDetailModal({ gameId, onClose }: GameDetailModalProp
 
     useEffect(() => {
         let cancelled = false
-        GetGameDetail(gameId)
-            .then((result) => {
-                if (!cancelled) setDetail(result)
+        Promise.all([GetGameDetail(gameId), GetGameGenres(gameId)])
+            .then(([result, gameGenres]) => {
+                if (!cancelled) {
+                    setDetail(result)
+                    setGenres(gameGenres)
+                }
             })
             .catch((err: unknown) => {
                 if (!cancelled) setError(extractError(err))
@@ -60,6 +68,19 @@ export default function GameDetailModal({ gameId, onClose }: GameDetailModalProp
             cancelled = true
         }
     }, [gameId])
+
+    const fetchGenres = async () => {
+        setGenresBusy(true)
+        try {
+            await FetchGameGenres(gameId)
+            setGenres(await GetGameGenres(gameId))
+            await refreshAll()
+        } catch (reason) {
+            notify('info', `未能更新 Steam 类型：${extractError(reason)}`)
+        } finally {
+            setGenresBusy(false)
+        }
+    }
 
     const runImageAction = async (target: 'cover' | 'icon', action: 'select' | 'auto' | 'clear') => {
         setBusyTarget(target)
@@ -159,6 +180,25 @@ export default function GameDetailModal({ gameId, onClose }: GameDetailModalProp
                     <dl>
                         <Field label="分类" value={detail.category?.name ?? '未分类'} />
                         <Field label="Steam AppID" value={detail.steamAppId ? String(detail.steamAppId) : ''} />
+                        <div className="border-b border-slate-800/70 py-2.5">
+                            <dt className="text-xs text-slate-500">游戏类型</dt>
+                            <dd className="mt-2 flex flex-wrap items-center gap-2">
+                                {genres.map((genre) => (
+                                    <span key={genre.id} className="rounded-full border border-slate-700 px-2.5 py-1 text-xs text-slate-300">
+                                        {genre.name}<span className="ml-1 text-slate-500">Steam</span>
+                                    </span>
+                                ))}
+                                {genres.length === 0 ? <span className="text-sm text-slate-500">暂无类型</span> : null}
+                                <button
+                                    type="button"
+                                    className={btnGhost}
+                                    disabled={genresBusy || detail.steamAppId === 0}
+                                    onClick={() => void fetchGenres()}
+                                >
+                                    {genresBusy ? '正在获取…' : '从 Steam 获取类型'}
+                                </button>
+                            </dd>
+                        </div>
                         <Field
                             label="标签"
                             value={detail.tagNames.length > 0 ? detail.tagNames.join('、') : '无'}
