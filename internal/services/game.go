@@ -60,7 +60,6 @@ func (s *GameService) Detail(id uint) (*GameDetail, error) {
 	for _, t := range game.Tags {
 		names = append(names, t.Name)
 	}
-
 	return &GameDetail{
 		Game:       *game,
 		TagNames:   names,
@@ -159,6 +158,7 @@ func (s *GameService) Delete(id uint) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		cleanups := []string{
 			"DELETE FROM game_tags WHERE game_id = ?",
+			"DELETE FROM game_genres WHERE game_id = ?",
 			"DELETE FROM play_sessions WHERE game_id = ?",
 			"DELETE FROM save_backups WHERE archive_id IN (SELECT id FROM save_archives WHERE game_id = ?)",
 			"DELETE FROM save_archives WHERE game_id = ?",

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { models } from '../../wailsjs/go/models'
 import {
     BatchFetchCovers,
+    BatchFetchGameGenres,
     BatchFetchIcons,
     GetLibraryDisplaySettings,
     SaveLibraryDisplaySettings,
@@ -106,6 +107,19 @@ export default function GameLibrary() {
             await refreshAll()
         } catch (reason) {
             notify('error', `批量获取图片失败：${extractError(reason)}`)
+        }
+    }
+
+    const batchFetchGenres = async () => {
+        try {
+            const result = await BatchFetchGameGenres(selected)
+            notify(
+                'success',
+                `Steam 类型获取完成：成功 ${result.succeeded}，失败 ${result.failed}，跳过 ${result.skipped}`,
+            )
+            setSelected([])
+        } catch (reason) {
+            notify('error', `批量获取 Steam 类型失败：${extractError(reason)}`)
         }
     }
 
@@ -290,6 +304,7 @@ export default function GameLibrary() {
                             <span className="mr-1 text-xs text-slate-400">已选 {selected.length} 个</span>
                             <button type="button" className={btnGhost} onClick={() => void batchFetch('cover')}>批量获取封面</button>
                             <button type="button" className={btnGhost} onClick={() => void batchFetch('icon')}>批量获取图标</button>
+                            <button type="button" className={btnGhost} onClick={() => void batchFetchGenres()}>批量获取 Steam 类型</button>
                             <button type="button" className={btnGhost} onClick={() => setSelected([])}>取消选择</button>
                         </div>
                     ) : null}

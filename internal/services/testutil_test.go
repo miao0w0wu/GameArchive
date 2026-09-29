@@ -20,6 +20,8 @@ func newTestDB(t *testing.T) *gorm.DB {
 	err = db.AutoMigrate(
 		&models.Category{},
 		&models.Tag{},
+		&models.Genre{},
+		&models.GameGenre{},
 		&models.Game{},
 		&models.PlaySession{},
 		&models.Setting{},

@@ -38,6 +38,10 @@ export function BatchFetchCovers(arg1) {
   return window['go']['main']['App']['BatchFetchCovers'](arg1);
 }
 
+export function BatchFetchGameGenres(arg1) {
+  return window['go']['main']['App']['BatchFetchGameGenres'](arg1);
+}
+
 export function BatchFetchIcons(arg1) {
   return window['go']['main']['App']['BatchFetchIcons'](arg1);
 }
@@ -74,6 +78,10 @@ export function ExportReportMarkdown(arg1) {
   return window['go']['main']['App']['ExportReportMarkdown'](arg1);
 }
 
+export function FetchGameGenres(arg1) {
+  return window['go']['main']['App']['FetchGameGenres'](arg1);
+}
+
 export function GenerateAIReport(arg1) {
   return window['go']['main']['App']['GenerateAIReport'](arg1);
 }
@@ -104,6 +112,10 @@ export function GetGameDetail(arg1) {
 
 export function GetGameDirectory() {
   return window['go']['main']['App']['GetGameDirectory']();
+}
+
+export function GetGameGenres(arg1) {
+  return window['go']['main']['App']['GetGameGenres'](arg1);
 }
 
 export function GetGameImageData(arg1, arg2) {

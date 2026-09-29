@@ -490,6 +490,30 @@ func (a *App) SyncSteamLibrary() (services.SteamSyncResult, error) {
 	return result, nil
 }
 
+// FetchGameGenres 从 Steam appdetails 获取单个游戏的官方类型。
+func (a *App) FetchGameGenres(gameID uint) ([]models.Genre, error) {
+	if err := a.ready(); err != nil {
+		return []models.Genre{}, err
+	}
+	return a.svc.Genre.FetchGameGenres(gameID)
+}
+
+// BatchFetchGameGenres 批量获取 Steam 官方类型，网络失败的游戏会计入结果并继续处理。
+func (a *App) BatchFetchGameGenres(gameIDs []uint) (services.BatchGenreResult, error) {
+	if err := a.ready(); err != nil {
+		return services.BatchGenreResult{}, err
+	}
+	return a.svc.Genre.BatchFetchGameGenres(gameIDs)
+}
+
+// GetGameGenres 查询游戏已保存的类型。
+func (a *App) GetGameGenres(gameID uint) ([]models.Genre, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
+	return a.svc.Genre.GetGameGenres(gameID)
+}
+
 // ------------------------------------------------------------- 游戏封面与展示
 
 // SelectAndSetCover 选择图片并将其复制到应用本地缓存，target 为 cover 或 icon。

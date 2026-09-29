@@ -71,6 +71,7 @@
 - 先按 AppID 匹配，再按不区分大小写的游戏名匹配本地游戏；未匹配的游戏会作为 Steam 游戏记录导入。
 - Steam 累计时长单独存于 `steam_playtime_seconds`，不覆盖进程监控的 `total_seconds`。游戏库区分展示两种时长；仪表盘累计、Top 游戏与分类占比按两种来源的较大值计算，避免重复统计。
 - 设置页展示最近一次同步结果或错误；凭据、最近结果与同步错误保存在本机 `settings` 表。
+- 游戏详情和多选工具栏可按 AppID 从 Steam `appdetails` 获取官方类型；请求至少间隔 1.5 秒，失败时退避。类型保存在独立的 `genres` / `game_genres` 表，不抓取商店标签，也不修改标签数据。
 
 ### 游戏封面与展示模式
 
@@ -105,6 +106,7 @@
 │     ├─ report.go             # AI 报告生成、报告存档及导入导出
 │     ├─ archive.go            # 游戏存档登记、文件/文件夹备份与历史管理
 │     ├─ steam.go              # Steam 游戏库同步、AppID / 名称匹配与游玩时长关联
+│     ├─ genre.go              # Steam 官方类型获取、限流与关联更新
 │     └─ *_test.go             # 扫描、监控、统计与报告的单元测试
 ├─ build/                      # Wails 构建资源（图标、安装包脚本）
 └─ frontend/
@@ -136,6 +138,8 @@
 | `categories` | 分类（名称唯一、颜色、排序值） | 读写 |
 | `tags` | 标签（名称唯一、颜色） | 读写 |
 | `game_tags` | 游戏 ↔ 标签 多对多关联表 | 读写 |
+| `genres` | Steam 官方游戏类型及 Steam 类型 ID | 读写 |
+| `game_genres` | 游戏 ↔ 类型关联，按来源区分 | 读写 |
 | `play_sessions` | 单次游玩记录 | 读写（阶段 2 写入，阶段 3 聚合） |
 | `settings` | 键值配置（监控开关、扫描目录、AI 服务设置） | 读写 |
 | `reports` | AI / 导入报告 | 读写 |
@@ -172,6 +176,7 @@ ImportReportFromFile() / ExportReportMarkdown(id) / SaveImage(base64PNG, filenam
 
 GetSteamSettings() / SaveSteamSettings(config)
 GetSteamSyncStatus() / SyncSteamLibrary()
+FetchGameGenres(gameID) / BatchFetchGameGenres(gameIDs) / GetGameGenres(gameID)
 
 SelectAndSetCover(gameID, "cover" | "icon") / ClearCover(gameID, target)
 AutoFetchCover(gameID) / AutoFetchIcon(gameID)

@@ -62,6 +62,23 @@ type Tag struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
+// Genre Steam 官方游戏类型。
+type Genre struct {
+	ID           uint      `gorm:"primaryKey" json:"id"`
+	SteamGenreID string    `gorm:"size:32;not null;uniqueIndex" json:"steamGenreId"`
+	Name         string    `gorm:"size:100;not null" json:"name"`
+	CreatedAt    time.Time `json:"createdAt"`
+}
+
+// GameGenre 游戏与类型的关联；source 区分 Steam 同步和手动关联。
+type GameGenre struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	GameID    uint      `gorm:"not null;uniqueIndex:idx_game_genres,priority:1" json:"gameId"`
+	GenreID   uint      `gorm:"not null;uniqueIndex:idx_game_genres,priority:2" json:"genreId"`
+	Source    string    `gorm:"size:32;not null;default:steam;uniqueIndex:idx_game_genres,priority:3" json:"source"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
 // PlaySession 一次游玩记录，由阶段 2 的进程监控写入。
 type PlaySession struct {
 	ID      uint       `gorm:"primaryKey" json:"id"`
