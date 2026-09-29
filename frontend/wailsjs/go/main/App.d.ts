@@ -46,6 +46,10 @@ export function GetMonitorStatus():Promise<services.MonitorStatus>;
 
 export function GetReport(arg1:number):Promise<models.Report>;
 
+export function GetSteamSettings():Promise<{apiKey:string;steamId:string}>;
+
+export function GetSteamSyncStatus():Promise<{lastAttemptAt:string;lastError:string;lastResult:{fetchedGames:number;matchedByAppId:number;matchedByName:number;importedGames:number;totalPlaytimeSeconds:number;syncedAt:string}|null}>;
+
 export function GetStatsByPeriod(arg1:string,arg2:string,arg3:string):Promise<services.StatsResult>;
 
 export function ImportReportFromFile():Promise<models.Report>;
@@ -66,6 +70,8 @@ export function ListTags():Promise<Array<models.Tag>>;
 
 export function SaveAISettings(arg1:services.AIConfig):Promise<void>;
 
+export function SaveSteamSettings(arg1:{apiKey:string;steamId:string}):Promise<void>;
+
 export function SaveImage(arg1:string,arg2:string):Promise<string>;
 
 export function SaveReport(arg1:models.Report):Promise<models.Report>;
@@ -81,6 +87,8 @@ export function SelectSaveArchiveFile():Promise<string>;
 export function SelectSaveBackupDirectory(arg1:string):Promise<string>;
 
 export function StartMonitor():Promise<void>;
+
+export function SyncSteamLibrary():Promise<{fetchedGames:number;matchedByAppId:number;matchedByName:number;importedGames:number;totalPlaytimeSeconds:number;syncedAt:string}>;
 
 export function StopMonitor():Promise<void>;
 

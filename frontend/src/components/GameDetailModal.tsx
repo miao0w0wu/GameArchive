@@ -64,13 +64,17 @@ export default function GameDetailModal({ gameId, onClose }: GameDetailModalProp
                         <div>
                             <h3 className="text-lg font-semibold text-slate-100">{detail.name}</h3>
                             <p className="mt-1 text-xs text-slate-500">
-                                累计时长 {formatDuration(detail.totalSeconds)}（{detail.totalHours} 小时）
+                                本地累计 {formatDuration(detail.totalSeconds)}（{detail.totalHours} 小时）
+                                {detail.steamPlaytimeSeconds > 0 ? (
+                                    <span className="ml-2">· Steam {formatDuration(detail.steamPlaytimeSeconds)}</span>
+                                ) : null}
                             </p>
                         </div>
                     </div>
 
                     <dl>
                         <Field label="分类" value={detail.category?.name ?? '未分类'} />
+                        <Field label="Steam AppID" value={detail.steamAppId ? String(detail.steamAppId) : ''} />
                         <Field
                             label="标签"
                             value={detail.tagNames.length > 0 ? detail.tagNames.join('、') : '无'}

@@ -240,12 +240,16 @@ func TestGetDashboardStatsWindows(t *testing.T) {
 	db := newTestDB(t)
 	service := &StatsService{db: db}
 
-	alpha := models.Game{Name: "Alpha", TotalSeconds: 5000}
+	alpha := models.Game{Name: "Alpha", TotalSeconds: 5000, SteamPlaytimeSeconds: 4000}
 	if err := db.Create(&alpha).Error; err != nil {
 		t.Fatal(err)
 	}
 	idle := models.Game{Name: "Idle"}
 	if err := db.Create(&idle).Error; err != nil {
+		t.Fatal(err)
+	}
+	steamOnly := models.Game{Name: "Steam Game", SteamPlaytimeSeconds: 8000}
+	if err := db.Create(&steamOnly).Error; err != nil {
 		t.Fatal(err)
 	}
 
@@ -262,11 +266,11 @@ func TestGetDashboardStatsWindows(t *testing.T) {
 		t.Fatalf("GetDashboardStats() error = %v", err)
 	}
 
-	if overview.TotalSeconds != 5000 {
-		t.Fatalf("TotalSeconds = %d, want 5000", overview.TotalSeconds)
+	if overview.TotalSeconds != 13000 {
+		t.Fatalf("TotalSeconds = %d, want 13000 including Steam playtime", overview.TotalSeconds)
 	}
-	if overview.GameCount != 2 {
-		t.Fatalf("GameCount = %d, want 2", overview.GameCount)
+	if overview.GameCount != 3 {
+		t.Fatalf("GameCount = %d, want 3", overview.GameCount)
 	}
 	sameDay := weekStart.Year() == now.Year() && weekStart.YearDay() == now.YearDay()
 
@@ -299,12 +303,13 @@ func TestGetDashboardStatsWindows(t *testing.T) {
 		t.Fatalf("ActiveDays = %d, want %d", overview.ActiveDays, wantActiveDays)
 	}
 
-	if len(overview.TopGames) != 1 || overview.TopGames[0].Name != "Alpha" ||
-		overview.TopGames[0].Seconds != 5000 || overview.TopGames[0].Percent != 100 {
+	if len(overview.TopGames) != 2 || overview.TopGames[0].Name != "Steam Game" ||
+		overview.TopGames[0].Seconds != 8000 || overview.TopGames[1].Name != "Alpha" ||
+		overview.TopGames[1].Seconds != 5000 {
 		t.Fatalf("top games = %#v", overview.TopGames)
 	}
 	if len(overview.Categories) != 1 || overview.Categories[0].Name != uncategorizedName ||
-		overview.Categories[0].Seconds != 5000 {
+		overview.Categories[0].Seconds != 13000 {
 		t.Fatalf("categories = %#v", overview.Categories)
 	}
 }

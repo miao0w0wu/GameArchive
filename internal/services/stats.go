@@ -240,12 +240,16 @@ func (s *StatsService) GetDashboardStats() (StatsOverview, error) {
 	for _, game := range games {
 		info := newStatsGame(game)
 		index[game.ID] = info
-		overview.TotalSeconds += game.TotalSeconds
-		if game.TotalSeconds <= 0 {
+		seconds := game.TotalSeconds
+		if game.SteamPlaytimeSeconds > seconds {
+			seconds = game.SteamPlaytimeSeconds
+		}
+		overview.TotalSeconds += seconds
+		if seconds <= 0 {
 			continue
 		}
-		gameTotals[game.ID] = game.TotalSeconds
-		addBreakdown(categoryAcc, info.CategoryName, info.CategoryColor, game.ID, game.TotalSeconds)
+		gameTotals[game.ID] = seconds
+		addBreakdown(categoryAcc, info.CategoryName, info.CategoryColor, game.ID, seconds)
 	}
 	overview.Categories = buildBreakdown(categoryAcc, overview.TotalSeconds)
 	overview.TopGames = rankGames(gameTotals, index, overview.TotalSeconds)

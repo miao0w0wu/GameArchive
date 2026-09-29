@@ -2,7 +2,7 @@
 
 统计每一个游戏的游戏时长、进行游玩数据分析，并支持本地游戏存档导入与备份的桌面应用。
 
-当前进度：**阶段 1-5 已完成**。阶段 5 提供本地游戏存档登记、文件/文件夹备份及备份历史管理。
+当前进度：**阶段 1-6 已完成**。阶段 6 接入 Steam 游戏库与游玩时长同步。
 
 ## 技术栈
 
@@ -64,12 +64,20 @@
 - 删除存档或备份历史默认只删数据库记录并保留磁盘文件；需在二次确认中勾选后，才会删除对应原始存档或备份文件。
 - 删除存档记录会同时移除其备份历史记录，但生成的备份文件仍保留；删除游戏也只移除档案记录，不删除磁盘文件。
 
+### 阶段 6：Steam 平台数据接入
+
+- 设置页可填写 Steam Web API Key 与 17 位 SteamID64，并手动触发游戏库同步。
+- 调用 `IPlayerService/GetOwnedGames` 获取游戏名称、AppID 和累计游玩分钟数；Steam 资料库需允许查看游戏详情。
+- 先按 AppID 匹配，再按不区分大小写的游戏名匹配本地游戏；未匹配的游戏会作为 Steam 游戏记录导入。
+- Steam 累计时长单独存于 `steam_playtime_seconds`，不覆盖进程监控的 `total_seconds`。游戏库区分展示两种时长；仪表盘累计、Top 游戏与分类占比按两种来源的较大值计算，避免重复统计。
+- 设置页展示最近一次同步结果或错误；凭据、最近结果与同步错误保存在本机 `settings` 表。
+
 ## 目录结构
 
 ```
 .
 ├─ main.go                     # Wails 入口：窗口配置、启动/退出钩子、绑定 App
-├─ app.go                      # 绑定给前端的 App 方法（游戏/分类/标签 CRUD、应用信息）
+├─ app.go                      # 绑定给前端的 App 方法（游戏管理、统计、Steam 等）
 ├─ wails.json                  # Wails 项目与应用元信息配置
 ├─ 项目总纲.md                  # 需求来源
 ├─ internal/
@@ -86,6 +94,7 @@
 │     ├─ stats.go              # 年 / 月 / 周统计聚合与仪表盘汇总
 │     ├─ report.go             # AI 报告生成、报告存档及导入导出
 │     ├─ archive.go            # 游戏存档登记、文件/文件夹备份与历史管理
+│     ├─ steam.go              # Steam 游戏库同步、AppID / 名称匹配与游玩时长关联
 │     └─ *_test.go             # 扫描、监控、统计与报告的单元测试
 ├─ build/                      # Wails 构建资源（图标、安装包脚本）
 └─ frontend/
@@ -96,7 +105,7 @@
       ├─ main.tsx / style.css  # 入口与全局样式（Tailwind）
       ├─ lib/                  # 格式化、图表、Markdown 清理与图片导出辅助
       ├─ stores/appStore.ts    # Zustand 状态与所有 Wails 调用
-      ├─ components/           # Sidebar、Modal、EChart、ScanGamesModal、游戏表单 / 详情等
+      ├─ components/           # Sidebar、Modal、游戏表单 / 详情、AI / Steam 设置等
       ├─ pages/                # Dashboard、GameLibrary、StatsPage、CategoriesPage、SettingsPage
       └─ wailsjs/              # Wails 自动生成的绑定（勿手动修改）
 ```
@@ -113,7 +122,7 @@
 
 | 表 | 说明 | 当前用途 |
 | --- | --- | --- |
-| `games` | 游戏主表（名称、exe 路径、进程名、安装目录、封面、分类、累计秒数、最后游玩时间） | 读写 |
+| `games` | 游戏主表（名称、exe 路径、进程名、安装目录、封面、分类、本地累计秒数、Steam AppID / 秒数 / 同步时间、最后游玩时间） | 读写 |
 | `categories` | 分类（名称唯一、颜色、排序值） | 读写 |
 | `tags` | 标签（名称唯一、颜色） | 读写 |
 | `game_tags` | 游戏 ↔ 标签 多对多关联表 | 读写 |
@@ -123,7 +132,7 @@
 | `save_archives` | 游戏存档原路径、备份目标、最近备份时间与备注 | 读写 |
 | `save_backups` | 每次备份路径、时间与备注 | 读写 |
 
-`total_seconds` 与 `last_played_at` 由阶段 2 的进程监控维护，前端新增游戏时会被强制初始化为 0 / NULL。
+`total_seconds` 与 `last_played_at` 由阶段 2 的进程监控维护，前端新增游戏时会被强制初始化为 0 / NULL。Steam 的 AppID、游玩秒数和最近同步时间分别保存在 `steam_app_id`、`steam_playtime_seconds` 和 `steam_last_synced_at`；两类时长独立维护。
 
 ## 前端可调用的后端方法
 
@@ -150,6 +159,9 @@ GetAISettings() / SaveAISettings(config) / TestAIConnection()
 GenerateAIReport(request) / ListReports() / GetReport(id) / SaveReport(report) / DeleteReport(id)
 ImportReportFromFile() / ExportReportMarkdown(id) / SaveImage(base64PNG, filename)
 
+GetSteamSettings() / SaveSteamSettings(config)
+GetSteamSyncStatus() / SyncSteamLibrary()
+
 SelectSaveArchiveFile() / SelectSaveArchiveDirectory() / SelectSaveBackupDirectory(defaultDir)
 AddSaveArchive(gameID, name, sourcePath, isDir, backupDir, note)
 ListSaveArchives(gameID) / BackupSaveArchive(archiveID, targetDir, note) / ListSaveBackups(archiveID)
@@ -160,6 +172,7 @@ DeleteSaveArchive(id, deleteOriginal) / DeleteSaveBackup(id, deleteFile)
 > `tracker:update` 事件会在成功轮询后推送监控状态。扫描仅识别 `.exe`；`.lnk` / `.url` 与 Steam manifest 解析不在本阶段实现。
 > `GetStatsByPeriod` 的 `start` / `end` 为空时统计当前周期，同时传入按自定义范围统计；跨天会话归属开始日期。
 > AI 服务 API Key 需在桌面应用设置页输入；不要将密钥提交到版本库。生成报告会把对应周期的统计数据发送到已配置的 AI 服务。
+> Steam API Key 与 SteamID64 需在设置页输入；手动同步需要 Steam 游戏详情对 Web API 可见。Steam 时长与本地监控时长独立保存。
 > 存档登记只保存路径；删除操作默认保留文件，只有确认对话框中勾选删除文件后才会执行物理删除。
 
 ## 运行与构建

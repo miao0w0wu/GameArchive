@@ -23,7 +23,7 @@ const (
 	// AppVersion 应用版本号。
 	AppVersion = "0.1.0"
 	// StageName 当前实现阶段，展示在设置页以便区分尚未实现的功能。
-	StageName = "阶段 5：本地游戏存档与备份管理"
+	StageName = "阶段 6：Steam 平台数据接入"
 )
 
 const (
@@ -419,6 +419,45 @@ func (a *App) DeleteSaveBackup(id uint, deleteFile bool) error {
 		return err
 	}
 	return a.svc.Archive.DeleteBackup(id, deleteFile)
+}
+
+// ------------------------------------------------------------- Steam 平台数据
+
+// GetSteamSettings 返回保存在本机的 Steam API Key 和 SteamID。
+func (a *App) GetSteamSettings() (services.SteamConfig, error) {
+	if err := a.ready(); err != nil {
+		return services.SteamConfig{}, err
+	}
+	return a.svc.Steam.GetConfig()
+}
+
+// SaveSteamSettings 保存 Steam API Key 和 SteamID。
+func (a *App) SaveSteamSettings(config services.SteamConfig) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.svc.Steam.SaveConfig(config)
+}
+
+// GetSteamSyncStatus 返回上一次 Steam 游戏库同步结果。
+func (a *App) GetSteamSyncStatus() (services.SteamSyncStatus, error) {
+	if err := a.ready(); err != nil {
+		return services.SteamSyncStatus{}, err
+	}
+	return a.svc.Steam.GetSyncStatus()
+}
+
+// SyncSteamLibrary 手动获取 Steam 游戏库并匹配或导入本地游戏记录。
+func (a *App) SyncSteamLibrary() (services.SteamSyncResult, error) {
+	if err := a.ready(); err != nil {
+		return services.SteamSyncResult{}, err
+	}
+	result, err := a.svc.Steam.SyncLibrary(a.ctx)
+	if err != nil {
+		return services.SteamSyncResult{}, err
+	}
+	runtime.EventsEmit(a.ctx, "tracker:update", a.svc.Tracker.Status())
+	return result, nil
 }
 
 // ------------------------------------------------------------- 统计与图表

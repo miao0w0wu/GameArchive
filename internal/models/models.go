@@ -18,10 +18,14 @@ type Game struct {
 	Category   *Category `gorm:"foreignKey:CategoryID;constraint:OnDelete:SET NULL" json:"category"`
 	Tags       []Tag     `gorm:"many2many:game_tags;" json:"tags"`
 	// TotalSeconds 累计游玩秒数，由阶段 2 的进程监控累加。
-	TotalSeconds int64      `gorm:"not null;default:0" json:"totalSeconds"`
-	LastPlayedAt *time.Time `json:"lastPlayedAt"`
-	CreatedAt    time.Time  `json:"createdAt"`
-	UpdatedAt    time.Time  `json:"updatedAt"`
+	TotalSeconds int64  `gorm:"not null;default:0" json:"totalSeconds"`
+	SteamAppID   uint64 `gorm:"index" json:"steamAppId"`
+	// SteamPlaytimeSeconds 与本地监控时长分开保存，避免将同一游玩时间重复累计。
+	SteamPlaytimeSeconds int64      `gorm:"not null;default:0" json:"steamPlaytimeSeconds"`
+	SteamLastSyncedAt    *time.Time `json:"steamLastSyncedAt"`
+	LastPlayedAt         *time.Time `json:"lastPlayedAt"`
+	CreatedAt            time.Time  `json:"createdAt"`
+	UpdatedAt            time.Time  `json:"updatedAt"`
 }
 
 // ScannedGame 是目录扫描的预览结果，不会直接映射到数据库。

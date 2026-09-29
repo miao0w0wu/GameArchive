@@ -20,7 +20,10 @@ export default function Dashboard() {
     const dashboardStats = useAppStore((state) => state.dashboardStats)
 
     const totalSeconds = useMemo(
-        () => games.reduce((sum, game) => sum + (game.totalSeconds || 0), 0),
+        () => games.reduce(
+            (sum, game) => sum + Math.max(game.totalSeconds || 0, game.steamPlaytimeSeconds || 0),
+            0,
+        ),
         [games],
     )
 
@@ -161,7 +164,7 @@ export default function Dashboard() {
                                         </span>
                                     </span>
                                     <span className="shrink-0 text-xs text-slate-400">
-                                        {formatDuration(game.totalSeconds)}
+                                        {formatDuration(Math.max(game.totalSeconds || 0, game.steamPlaytimeSeconds || 0))}
                                     </span>
                                 </li>
                             ))}

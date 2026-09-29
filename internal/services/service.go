@@ -21,6 +21,7 @@ type Services struct {
 	Stats    *StatsService
 	Report   *ReportService
 	Archive  *ArchiveService
+	Steam    *SteamService
 }
 
 // New 创建业务服务集合。
@@ -34,5 +35,6 @@ func New(db *gorm.DB) *Services {
 		Stats:    &StatsService{db: db},
 		Report:   NewReportService(db),
 		Archive:  &ArchiveService{db: db},
+		Steam:    NewSteamService(db),
 	}
 }

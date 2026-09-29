@@ -273,8 +273,13 @@ export default function GameLibrary() {
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-4 py-3 text-slate-300">
-                                        {formatDuration(game.totalSeconds)}
+                                    <td className="px-4 py-3 text-xs text-slate-300">
+                                        <div>本地 {formatDuration(game.totalSeconds)}</div>
+                                        {game.steamPlaytimeSeconds > 0 ? (
+                                            <div className="mt-1 text-slate-500">
+                                                Steam {formatDuration(game.steamPlaytimeSeconds)}
+                                            </div>
+                                        ) : null}
                                     </td>
                                     <td className="px-4 py-3 text-slate-400">
                                         {game.lastPlayedAt ? formatDate(game.lastPlayedAt) : '暂无记录'}
@@ -340,9 +345,15 @@ export default function GameLibrary() {
 
                             <dl className="mt-3 space-y-1 text-xs text-slate-400">
                                 <div className="flex justify-between">
-                                    <dt>累计时长</dt>
+                                    <dt>本地时长</dt>
                                     <dd className="text-slate-300">{formatDuration(game.totalSeconds)}</dd>
                                 </div>
+                                {game.steamPlaytimeSeconds > 0 ? (
+                                    <div className="flex justify-between">
+                                        <dt>Steam 时长</dt>
+                                        <dd className="text-slate-300">{formatDuration(game.steamPlaytimeSeconds)}</dd>
+                                    </div>
+                                ) : null}
                                 <div className="flex justify-between">
                                     <dt>最后游玩</dt>
                                     <dd>{game.lastPlayedAt ? formatDate(game.lastPlayedAt) : '暂无记录'}</dd>
