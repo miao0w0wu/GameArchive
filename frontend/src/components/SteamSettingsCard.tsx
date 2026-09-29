@@ -6,34 +6,15 @@ import {
     SaveSteamSettings,
     SyncSteamLibrary,
 } from '../../wailsjs/go/main/App'
+import { services } from '../../wailsjs/go/models'
 import { btnGhost, btnPrimary, cardClass, inputClass, labelClass } from '../lib/ui'
 import { formatDuration } from '../lib/format'
 import { extractError, useAppStore } from '../stores/appStore'
 
-interface SteamConfig {
-    apiKey: string
-    steamId: string
-}
-
-interface SteamSyncResult {
-    fetchedGames: number
-    matchedByAppId: number
-    matchedByName: number
-    importedGames: number
-    totalPlaytimeSeconds: number
-    syncedAt: string
-}
-
-interface SteamSyncStatus {
-    lastAttemptAt: string
-    lastError: string
-    lastResult: SteamSyncResult | null
-}
-
-function formatDateTime(value?: string) {
+function formatDateTime(value?: string | number | Date) {
     if (!value) return '—'
-    const date = new Date(value)
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
+    const date = value instanceof Date ? value : new Date(value)
+    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString()
 }
 
 /** Steam 设置卡片：管理本机 API 凭据、手动同步和最近一次同步状态。 */
@@ -42,7 +23,7 @@ export default function SteamSettingsCard() {
     const refreshAll = useAppStore((state) => state.refreshAll)
     const [apiKey, setApiKey] = useState('')
     const [steamId, setSteamId] = useState('')
-    const [status, setStatus] = useState<SteamSyncStatus | null>(null)
+    const [status, setStatus] = useState<services.SteamSyncStatus | null>(null)
     const [showKey, setShowKey] = useState(false)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
@@ -52,7 +33,7 @@ export default function SteamSettingsCard() {
     useEffect(() => {
         let cancelled = false
         Promise.all([GetSteamSettings(), GetSteamSyncStatus()])
-            .then(([config, syncStatus]: [SteamConfig, SteamSyncStatus]) => {
+            .then(([config, syncStatus]) => {
                 if (cancelled) return
                 setApiKey(config.apiKey ?? '')
                 setSteamId(config.steamId ?? '')
@@ -97,12 +78,12 @@ export default function SteamSettingsCard() {
                 steamId: steamId.trim(),
             })
             operation = '同步游戏库'
-            const result: SteamSyncResult = await SyncSteamLibrary()
-            setStatus({
-                lastAttemptAt: result.syncedAt,
+            const result: services.SteamSyncResult = await SyncSteamLibrary()
+            setStatus(services.SteamSyncStatus.createFrom({
+                lastAttemptAt: String(result.syncedAt),
                 lastError: '',
                 lastResult: result,
-            })
+            }))
             notify('success', `Steam 同步完成：匹配 ${result.matchedByAppId + result.matchedByName} 个，新增 ${result.importedGames} 个`)
             await refreshAll()
         } catch (reason) {

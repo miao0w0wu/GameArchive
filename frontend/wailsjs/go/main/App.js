@@ -86,16 +86,16 @@ export function GetReport(arg1) {
   return window['go']['main']['App']['GetReport'](arg1);
 }
 
+export function GetStatsByPeriod(arg1, arg2, arg3) {
+  return window['go']['main']['App']['GetStatsByPeriod'](arg1, arg2, arg3);
+}
+
 export function GetSteamSettings() {
   return window['go']['main']['App']['GetSteamSettings']();
 }
 
 export function GetSteamSyncStatus() {
   return window['go']['main']['App']['GetSteamSyncStatus']();
-}
-
-export function GetStatsByPeriod(arg1, arg2, arg3) {
-  return window['go']['main']['App']['GetStatsByPeriod'](arg1, arg2, arg3);
 }
 
 export function ImportReportFromFile() {
@@ -134,16 +134,16 @@ export function SaveAISettings(arg1) {
   return window['go']['main']['App']['SaveAISettings'](arg1);
 }
 
-export function SaveSteamSettings(arg1) {
-  return window['go']['main']['App']['SaveSteamSettings'](arg1);
-}
-
 export function SaveImage(arg1, arg2) {
   return window['go']['main']['App']['SaveImage'](arg1, arg2);
 }
 
 export function SaveReport(arg1) {
   return window['go']['main']['App']['SaveReport'](arg1);
+}
+
+export function SaveSteamSettings(arg1) {
+  return window['go']['main']['App']['SaveSteamSettings'](arg1);
 }
 
 export function ScanGamesInDirectory(arg1, arg2) {
@@ -170,12 +170,12 @@ export function StartMonitor() {
   return window['go']['main']['App']['StartMonitor']();
 }
 
-export function SyncSteamLibrary() {
-  return window['go']['main']['App']['SyncSteamLibrary']();
-}
-
 export function StopMonitor() {
   return window['go']['main']['App']['StopMonitor']();
+}
+
+export function SyncSteamLibrary() {
+  return window['go']['main']['App']['SyncSteamLibrary']();
 }
 
 export function TestAIConnection() {
